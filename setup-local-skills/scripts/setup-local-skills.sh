@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Setup Local Skills - Create symlinks for AI tools in the current repository
-# Usage: ./setup-local-skills.sh [gemini|claude|cursor|all]
+# Usage: ./setup-local-skills.sh [gemini|claude|all]
 
 set -e
 
@@ -94,27 +94,13 @@ setup_claude() {
     add_to_gitignore ".claude/"
 }
 
-# Setup Cursor
-setup_cursor() {
-    echo ""
-    echo "🔵 Setting up Cursor..."
-    
-    if [ ! -f AGENTS.md ]; then
-        echo -e "${RED}Error: AGENTS.md not found in repo root${NC}"
-        return 1
-    fi
-    
-    create_symlink "AGENTS.md" ".cursorrules" ".cursorrules"
-}
-
 # Show usage
 show_usage() {
-    echo "Usage: $0 [gemini|claude|cursor|all]"
+    echo "Usage: $0 [gemini|claude|all]"
     echo ""
     echo "Options:"
     echo "  gemini  - Create GEMINI.md symlink to AGENTS.md"
     echo "  claude  - Create .claude/skills -> .agent/skills symlink"
-    echo "  cursor  - Create .cursorrules symlink to AGENTS.md"
     echo "  all     - Setup all tools"
     echo ""
     echo "Examples:"
@@ -130,13 +116,9 @@ case "${1:-}" in
     claude)
         setup_claude
         ;;
-    cursor)
-        setup_cursor
-        ;;
     all)
         setup_gemini
         setup_claude
-        setup_cursor
         ;;
     -h|--help|"")
         show_usage
@@ -153,5 +135,5 @@ echo ""
 echo -e "${GREEN}✅ Setup complete!${NC}"
 echo ""
 echo "Verify with:"
-echo "  ls -la GEMINI.md .cursorrules .claude/ 2>/dev/null"
+echo "  ls -la GEMINI.md .claude/ 2>/dev/null"
 echo "  git status"

@@ -1,6 +1,6 @@
 ---
 name: setting-up-local-skills
-description: Set up AI tool symlinks in a repository for multi-agent compatibility. Use when the user wants to set up skills for Gemini, Claude, Cursor, or other AI tools, or when they mention "setup skills", "configure agents", or "link AGENTS.md".
+description: Set up AI tool symlinks in a repository for multi-agent compatibility. Use when the user wants to set up skills for Gemini, Claude, or other AI tools, or when they mention "setup skills", "configure agents", or "link AGENTS.md".
 ---
 
 # Local Skills Setup
@@ -13,7 +13,6 @@ Create symlinks so multiple AI tools can use the same skill definitions from `.a
 |------|---------|
 | **Gemini** | `setup gemini` |
 | **Claude** | `setup claude` |
-| **Cursor** | `setup cursor` |
 | **All tools** | `setup all` |
 
 ---
@@ -25,7 +24,6 @@ Create symlinks so multiple AI tools can use the same skill definitions from `.a
 | Gemini | `GEMINI.md` | `AGENTS.md` |
 | Claude | `.claude/settings.json` | `.agent/settings.json` |
 | Claude | `.claude/skills/` | `.agent/skills/` |
-| Cursor | `.cursorrules` | `AGENTS.md` |
 
 > [!NOTE]
 > All symlinks are automatically added to `.gitignore` to keep the repo clean.
@@ -82,16 +80,6 @@ mkdir -p .claude
 ls -la .claude/
 ```
 
-#### For Cursor
-
-```bash
-# Create symlink
-ln -s AGENTS.md .cursorrules
-
-# Verify
-ls -la .cursorrules
-```
-
 ---
 
 ### 3. Update .gitignore
@@ -100,7 +88,7 @@ Add symlinks to `.gitignore` to avoid committing them:
 
 ```bash
 # Check if entries already exist
-grep -E "^GEMINI\.md$|^\.claude/?$|^\.cursorrules$" .gitignore
+grep -E "^GEMINI\.md$|^\.claude/?$" .gitignore
 
 # Add missing entries
 cat >> .gitignore << 'EOF'
@@ -108,7 +96,6 @@ cat >> .gitignore << 'EOF'
 # AI tool symlinks (source of truth is AGENTS.md and .agent/)
 GEMINI.md
 .claude/
-.cursorrules
 EOF
 ```
 
@@ -121,12 +108,12 @@ EOF
 
 ```bash
 # Check all symlinks are valid
-for f in GEMINI.md .cursorrules .claude/skills .claude/settings.json; do
+for f in GEMINI.md .claude/skills .claude/settings.json; do
     [ -L "$f" ] && echo "✓ $f -> $(readlink $f)" || [ ! -e "$f" ] || echo "✗ $f exists but is not a symlink"
 done
 
 # Check .gitignore
-grep -E "GEMINI|\.claude|\.cursorrules" .gitignore
+grep -E "GEMINI|\.claude" .gitignore
 ```
 
 ---
@@ -159,18 +146,16 @@ mkdir -p .claude
 
 # Create symlinks (safe - won't overwrite)
 [ ! -e GEMINI.md ] && ln -s AGENTS.md GEMINI.md
-[ ! -e .cursorrules ] && ln -s AGENTS.md .cursorrules
 [ -d .agent/skills ] && [ ! -e .claude/skills ] && ln -s ../.agent/skills .claude/skills
 [ -f .agent/settings.json ] && [ ! -e .claude/settings.json ] && ln -s ../.agent/settings.json .claude/settings.json
 
 # Update .gitignore if needed
 grep -q "^GEMINI\.md$" .gitignore 2>/dev/null || echo "GEMINI.md" >> .gitignore
 grep -q "^\.claude/?$" .gitignore 2>/dev/null || echo ".claude/" >> .gitignore
-grep -q "^\.cursorrules$" .gitignore 2>/dev/null || echo ".cursorrules" >> .gitignore
 
 # Verify
 echo "=== Symlinks ==="
-ls -la GEMINI.md .cursorrules .claude/ 2>/dev/null
+ls -la GEMINI.md .claude/ 2>/dev/null
 echo "=== .gitignore ==="
-grep -E "GEMINI|\.claude|\.cursorrules" .gitignore
+grep -E "GEMINI|\.claude" .gitignore
 ```
