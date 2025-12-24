@@ -21,8 +21,30 @@ if [ -e "$CLAUDE_SKILLS_DIR" ]; then
         exit 0
     else
         echo "⚠️  $CLAUDE_SKILLS_DIR already exists and is not a symlink."
-        echo "   Please backup/remove it manually before running this script."
-        exit 1
+        echo ""
+        echo "📁 Current contents:"
+        ls -la "$CLAUDE_SKILLS_DIR" 2>/dev/null | head -20
+        echo ""
+        
+        # Count items (excluding . and ..)
+        ITEM_COUNT=$(find "$CLAUDE_SKILLS_DIR" -mindepth 1 | wc -l | tr -d ' ')
+        if [ "$ITEM_COUNT" -gt 0 ]; then
+            echo "⚠️  This folder contains $ITEM_COUNT item(s) that will be DELETED."
+        else
+            echo "ℹ️  This folder is empty."
+        fi
+        echo ""
+        
+        read -p "Do you want to remove $CLAUDE_SKILLS_DIR and create the symlink? [y/N] " -n 1 -r
+        echo ""
+        
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            echo "🗑️  Removing $CLAUDE_SKILLS_DIR..."
+            rm -rf "$CLAUDE_SKILLS_DIR"
+        else
+            echo "❌ Setup cancelled. No changes made."
+            exit 1
+        fi
     fi
 fi
 
