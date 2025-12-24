@@ -78,11 +78,17 @@ The description determines when the agent invokes the skill.
 | 0 | Empty or missing description |
 | 5 | Vague description (e.g., "helps with files") |
 | 10 | Clear "what" but missing "when to use" triggers |
-| 15 | Specific "what" + multiple "when to use" trigger keywords |
+| 13 | Specific "what" + multiple triggers, but no "Why?" line after title |
+| 15 | Specific "what" + multiple triggers + **"Why?" line** explaining the problem solved |
 
 **Formula for perfect description:**
 ```
 [What the skill does] + [When to use it with trigger keywords]
+```
+
+**"Why?" line** (after title in SKILL.md body):
+```markdown
+**Why?** [One sentence explaining the problem this solves]
 ```
 
 **Examples:**
@@ -112,7 +118,7 @@ File organization and progressive disclosure.
 | 0 | No SKILL.md or broken file structure |
 | 3 | SKILL.md exists but >500 lines with no progressive disclosure |
 | 6 | SKILL.md reasonable length but poor organization |
-| 8 | Good structure but missing one key supporting file |
+| 8 | Good structure but missing one key supporting file OR over-engineered |
 | 10 | Appropriate structure for complexity, progressive disclosure used correctly |
 
 **Structure guidelines:**
@@ -121,6 +127,11 @@ File organization and progressive disclosure.
 - Examples belong in EXAMPLES.md
 - Testing scenarios belong in TESTING.md
 - File references should be one level deep from SKILL.md
+
+**Right-sizing check:**
+- Simple skills should NOT have TESTING.md, REFERENCE.md, or EXAMPLES.md
+- Only add supporting files if they contain substantial unique content
+- Ask: "Would this skill work without this file?" If yes, remove it
 
 ---
 

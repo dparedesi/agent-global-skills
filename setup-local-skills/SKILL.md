@@ -7,13 +7,14 @@ description: Set up AI tool symlinks in a repository for multi-agent compatibili
 
 Create symlinks so multiple AI tools can use the same skill definitions from `.agent/`.
 
+**Why?** Different AI tools look for config in different places (`.claude/`, `GEMINI.md`). This skill creates symlinks so you maintain ONE source of truth in `.agent/` and `AGENTS.md`.
+
 ## Quick Start
 
-| Tool | Command |
-|------|---------|
-| **Gemini** | `setup gemini` |
-| **Claude** | `setup claude` |
-| **All tools** | `setup all` |
+```bash
+# Run from any repo root (script is in the global skill location)
+~/.claude/skills/setup-local-skills/scripts/setup-local-skills.sh [gemini|claude|all]
+```
 
 ---
 
@@ -32,88 +33,42 @@ Create symlinks so multiple AI tools can use the same skill definitions from `.a
 
 ## Workflow
 
-### 1. Validate Prerequisites
-
-Before creating symlinks, verify:
+### 1. Run the Setup Script
 
 ```bash
-# Check if AGENTS.md exists (source of truth)
-ls -la AGENTS.md
-
-# Check if .agent/ directory exists
-ls -la .agent/
+# From repo root — script lives in the global skills directory
+~/.claude/skills/setup-local-skills/scripts/setup-local-skills.sh [gemini|claude|all]
 ```
 
-- [ ] `AGENTS.md` exists in repo root
-- [ ] `.agent/` directory exists (create if needed)
+The script automatically:
+- Validates prerequisites (git repo, AGENTS.md exists)
+- Creates symlinks with relative paths
+- Safely adds entries to `.gitignore` (handles missing newlines)
+- Asks for Y/N confirmation before overwriting existing files
 
 > [!TIP]
-> If `.agent/skills/` doesn't exist locally, the skill symlinks will point to the global `~/.agent/skills/` via AGENTS.md references.
-
----
-
-### 2. Create Symlinks Based on Tool
-
-#### For Gemini
-
-```bash
-# Create symlink
-ln -s AGENTS.md GEMINI.md
-
-# Verify
-ls -la GEMINI.md
-```
-
-#### For Claude
-
-```bash
-# Create .claude directory
-mkdir -p .claude
-
-# Create settings symlink (if .agent/settings.json exists)
-[ -f .agent/settings.json ] && ln -s ../.agent/settings.json .claude/settings.json
-
-# Create skills symlink (if .agent/skills exists)
-[ -d .agent/skills ] && ln -s ../.agent/skills .claude/skills
-
-# Verify
-ls -la .claude/
-```
-
----
-
-### 3. Update .gitignore
-
-Add symlinks to `.gitignore` to avoid committing them:
-
-```bash
-# Check if entries already exist
-grep -E "^GEMINI\.md$|^\.claude/?$" .gitignore
-
-# Add missing entries
-cat >> .gitignore << 'EOF'
-
-# AI tool symlinks (source of truth is AGENTS.md and .agent/)
-GEMINI.md
-.claude/
-EOF
-```
+> If `.agent/skills/` doesn't exist locally, symlinks will reference global `~/.agent/skills/` via AGENTS.md.
 
 > [!IMPORTANT]
-> Always verify `.gitignore` was updated before committing. Symlinks should not be tracked.
+> When adding to `.gitignore` manually, ensure the file ends with a newline first:
+> ```bash
+> [ -n "$(tail -c1 .gitignore 2>/dev/null)" ] && echo >> .gitignore
+> echo "ENTRY" >> .gitignore
+> ```
 
 ---
 
-### 4. Verify Setup
+### 2. Verify Setup
 
 ```bash
-# Check all symlinks are valid
-for f in GEMINI.md .claude/skills .claude/settings.json; do
-    [ -L "$f" ] && echo "✓ $f -> $(readlink $f)" || [ ! -e "$f" ] || echo "✗ $f exists but is not a symlink"
-done
+# Check symlinks are valid
+ls -la GEMINI.md .claude/ 2>/dev/null
 
 # Check .gitignore
 grep -E "GEMINI|\.claude" .gitignore
+
+# Check git status (symlinks should be ignored)
+git status
 ```
 
 ---
@@ -125,6 +80,22 @@ grep -E "GEMINI|\.claude" .gitignore
 - **Use relative paths** — Symlinks should work regardless of absolute path
 - **Confirm before overwriting** — Script shows existing content and asks for Y/N confirmation before removing
 
+### Anti-Patterns
+
+| Don't | Why | Do Instead |
+|-------|-----|------------|
+| Use absolute paths in symlinks | Breaks when repo moves or on other machines | Use relative paths (`../`) |
+| Commit symlinks to git | Creates merge conflicts, breaks for others | Add to `.gitignore` |
+| Edit GEMINI.md or .claude/ directly | Changes won't sync to other tools | Edit `AGENTS.md` or `.agent/` |
+| Run outside repo root | Symlinks will be created in wrong location | `cd` to repo root first |
+
+### Validation Checklist
+
+Before considering setup complete:
+- [ ] `ls -la` shows symlinks pointing to correct targets
+- [ ] `git status` shows no untracked symlinks
+- [ ] `.gitignore` contains entries for all symlinks
+
 ---
 
 ## Troubleshooting
@@ -135,27 +106,5 @@ grep -E "GEMINI|\.claude" .gitignore
 | Symlink broken after clone | Absolute path used | Recreate with relative path |
 | Changes not syncing | Editing symlink, not source | Edit `AGENTS.md` or `.agent/` directly |
 | Git tracking symlink | Missing .gitignore entry | Add entry to .gitignore |
+| Entries concatenated in .gitignore | File didn't end with newline | Use safe append pattern (see Workflow section) |
 
----
-
-## Example: Full Setup
-
-```bash
-# Setup all tools at once
-mkdir -p .claude
-
-# Create symlinks (safe - won't overwrite)
-[ ! -e GEMINI.md ] && ln -s AGENTS.md GEMINI.md
-[ -d .agent/skills ] && [ ! -e .claude/skills ] && ln -s ../.agent/skills .claude/skills
-[ -f .agent/settings.json ] && [ ! -e .claude/settings.json ] && ln -s ../.agent/settings.json .claude/settings.json
-
-# Update .gitignore if needed
-grep -q "^GEMINI\.md$" .gitignore 2>/dev/null || echo "GEMINI.md" >> .gitignore
-grep -q "^\.claude/?$" .gitignore 2>/dev/null || echo ".claude/" >> .gitignore
-
-# Verify
-echo "=== Symlinks ==="
-ls -la GEMINI.md .claude/ 2>/dev/null
-echo "=== .gitignore ==="
-grep -E "GEMINI|\.claude" .gitignore
-```

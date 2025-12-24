@@ -26,6 +26,8 @@ description: [What it does in one sentence]. Use when [trigger context 1], [trig
 
 [One-sentence summary of what this skill does.]
 
+**Why?** [One sentence explaining the problem this solves — what pain point or gap motivated this skill's existence.]
+
 ## Quick Start
 
 [2-3 line summary for returning users]
@@ -83,6 +85,8 @@ description: [What it does]. Use when [trigger 1], [trigger 2], or when the user
 # [Workflow Name]
 
 [One-sentence summary.]
+
+**Why?** [One sentence explaining the problem this solves — what pain point or gap motivated this skill's existence.]
 
 ## Quick Start (for returning users)
 
@@ -450,6 +454,8 @@ description: Generate [artifact type] by [method]. Use when [trigger 1], [trigge
 # [Artifact Type] Generator
 
 Generate [artifact type] following best practices and conventions.
+
+**Why?** [One sentence explaining the problem this solves — what pain point or gap motivated this skill's existence.]
 
 ## Quick Start
 

@@ -37,24 +37,43 @@ Ask the user:
 3. **What tools/scripts are needed?** (dependencies)
 4. **What's the expected output?** (deliverables)
 
-### Step 2: Choose Skill Structure
+### Step 2: Assess Complexity & Choose Structure
 
-> [!IMPORTANT]
-> **Read [TEMPLATES.md](TEMPLATES.md)** before choosing. It contains starter templates and common patterns (Workflow, Reference, Generator).
+> [!CAUTION]
+> **Default to Simple.** Only upgrade complexity if the skill genuinely needs it. Ask: "Would this skill work without this file?" If yes, don't add it.
+
+**Complexity Assessment:**
+
+| If the skill... | Then it's... |
+|-----------------|--------------|
+| Does ONE thing, linear flow, no scripts, <5 decision points | **Simple** |
+| Multi-step workflow, needs reference tables, moderate domain knowledge | **Standard** |
+| Many conditionals, requires scripts, extensive domain expertise, high failure modes | **Complex** |
+
+**Structure by Complexity:**
 
 | Complexity | Structure |
 |------------|-----------|
 | Simple | `SKILL.md` only |
-| Standard | `SKILL.md` + `REFERENCE.md` + `EXAMPLES.md` |
+| Standard | `SKILL.md` + `REFERENCE.md` or `EXAMPLES.md` |
 | Complex | Above + `TESTING.md` + `scripts/` |
+
+> [!TIP]
+> **Signs you're over-engineering:**
+> - Adding TESTING.md with obvious scenarios ("it should work")
+> - Creating REFERENCE.md that repeats the workflow
+> - Writing EXAMPLES.md when 2 inline examples suffice
+>
+> **Read [TEMPLATES.md](~/.agent/skills/skill-builder/TEMPLATES.md)** for starter templates.
 
 ### Step 3: Write the SKILL.md
 
-Use templates from [TEMPLATES.md](TEMPLATES.md). Ensure:
+Use templates from [TEMPLATES.md](~/.agent/skills/skill-builder/TEMPLATES.md). Ensure:
 1. **Frontmatter** — valid YAML with `name` (gerund form) and `description`
 2. **Description** — includes BOTH what it does AND when to use it
-3. **Workflow** — clear, numbered steps
-4. **Progressive disclosure** — link to supporting files
+3. **"Why?" line** — one sentence after title explaining the problem this solves
+4. **Workflow** — clear, numbered steps
+5. **Progressive disclosure** — link to supporting files (only if needed)
 
 > [!TIP]
 > Description is critical for discovery. Include multiple trigger keywords.
@@ -68,7 +87,7 @@ After creating, proceed to **Step 4** to evaluate.
 ### Step 4: Score the Skill
 
 > [!CRITICAL]
-> **Read [SCORING.md](SCORING.md) completely** before scoring. It contains both rubrics and scoring worksheets.
+> **Read [SCORING.md](~/.agent/skills/skill-builder/SCORING.md) completely** before scoring. It contains both rubrics and scoring worksheets.
 
 **Process:**
 1. Read all skill files (SKILL.md + supporting files)
@@ -77,7 +96,7 @@ After creating, proceed to **Step 4** to evaluate.
 4. Use Combined Score Matrix in SCORING.md for verdict
 5. Identify gaps in both dimensions
 
-**Present results using the format in [SCORING.md](SCORING.md#scoring-worksheet).**
+**Present results using the format in [SCORING.md](~/.agent/skills/skill-builder/SCORING.md#scoring-worksheet).**
 
 If either score < 90, proceed to **Step 5**.
 
@@ -121,11 +140,13 @@ Work systematically:
 Before declaring complete:
 - [ ] `name` uses gerund form (verb + -ing)
 - [ ] `description` includes what AND when
+- [ ] **"Why?" line** present after title
 - [ ] SKILL.md under 500 lines
+- [ ] Structure matches complexity (not over-engineered)
 - [ ] Examples show concrete input/output
 - [ ] Consistent terminology throughout
 
-Full checklist: **[CHECKLIST.md](CHECKLIST.md)**
+Full checklist: **[CHECKLIST.md](~/.agent/skills/skill-builder/CHECKLIST.md)**
 
 ---
 
@@ -143,7 +164,7 @@ Full checklist: **[CHECKLIST.md](CHECKLIST.md)**
 
 ## Reference
 
-- **[SCORING.md](SCORING.md)** — Structure + Efficacy rubrics with worksheets
-- **[TEMPLATES.md](TEMPLATES.md)** — Starter templates and common patterns
-- **[EXAMPLES.md](EXAMPLES.md)** — Before/after improvement examples
-- **[CHECKLIST.md](CHECKLIST.md)** — 50-point validation checklist
+- **[SCORING.md](~/.agent/skills/skill-builder/SCORING.md)** — Structure + Efficacy rubrics with worksheets
+- **[TEMPLATES.md](~/.agent/skills/skill-builder/TEMPLATES.md)** — Starter templates and common patterns
+- **[EXAMPLES.md](~/.agent/skills/skill-builder/EXAMPLES.md)** — Before/after improvement examples
+- **[CHECKLIST.md](~/.agent/skills/skill-builder/CHECKLIST.md)** — 50-point validation checklist
