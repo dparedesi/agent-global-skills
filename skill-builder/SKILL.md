@@ -1,11 +1,11 @@
 ---
-name: building-claude-skills
-description: Create, evaluate, and improve Claude Code skills to production quality (100/100). Use when the user wants to create a new skill, review an existing skill, score a skill against best practices, or improve a skill's quality. Also use when the user mentions skill development, skill templates, or skill optimization.
+name: building-agent-skills
+description: Create, evaluate, and improve Agent skills to production quality (100/100). Use when the user wants to create a new skill, review an existing skill, score a skill against best practices, or improve a skill's quality. Also use when the user mentions skill development, skill templates, or skill optimization.
 ---
 
 # Skill Builder Workflow
 
-Create, evaluate, and improve Claude Code skills to production quality.
+Create, evaluate, and improve Agent skills to production quality.
 
 ## Quick Start
 

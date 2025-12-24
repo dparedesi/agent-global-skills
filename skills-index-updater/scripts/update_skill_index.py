@@ -6,8 +6,8 @@ This script scans both local and global skill directories, extracts frontmatter
 from SKILL.md files, and updates the index section in AGENTS.md.
 
 Architecture Note:
-    - Local skills: `.claude/skills/` in the current repo (project-specific)
-    - Global skills: `~/.claude/skills/` (available across all repos)
+    - Local skills: `.agent/skills/` in the current repo (project-specific)
+    - Global skills: `~/.agent/skills/` (available across all repos)
     - Both are listed in AGENTS.md for VS Code/Kiro compatibility
     - Skills are grouped by scope (Global first, then Local)
 
@@ -45,10 +45,10 @@ def parse_yaml_fallback(text: str) -> Optional[Dict]:
     return result if result else None
 
 # Paths
-GLOBAL_SKILLS_DIR = Path.home() / ".claude" / "skills"
+GLOBAL_SKILLS_DIR = Path.home() / ".agent" / "skills"
 
 # Local paths - determined at runtime based on where script is invoked
-# When running from a repo, we find the repo's .claude/skills/ directory
+# When running from a repo, we find the repo's .agent/skills/ directory
 def find_repo_root() -> Optional[Path]:
     """Find the repository root by looking for .git directory."""
     cwd = Path.cwd()
@@ -58,12 +58,12 @@ def find_repo_root() -> Optional[Path]:
     return None
 
 REPO_ROOT = find_repo_root()
-LOCAL_SKILLS_DIR = REPO_ROOT / ".claude" / "skills" if REPO_ROOT else None
+LOCAL_SKILLS_DIR = REPO_ROOT / ".agent" / "skills" if REPO_ROOT else None
 AGENTS_MD = REPO_ROOT / "AGENTS.md" if REPO_ROOT else None
 
 # Path prefixes for generated index
-LOCAL_SKILLS_PATH_PREFIX = ".claude/skills"
-GLOBAL_SKILLS_PATH_PREFIX = "~/.claude/skills"
+LOCAL_SKILLS_PATH_PREFIX = ".agent/skills"
+GLOBAL_SKILLS_PATH_PREFIX = "~/.agent/skills"
 
 
 # Markers for the index section
@@ -124,7 +124,7 @@ def scan_skills_dir(skills_dir: Path, scope: str, path_prefix: str) -> List[Dict
     Args:
         skills_dir: Path to the skills directory to scan
         scope: "global" or "local" - used for labeling
-        path_prefix: Path prefix for display (e.g., ".claude/skills" or "~/.claude/skills")
+        path_prefix: Path prefix for display (e.g., ".agent/skills" or "~/.agent/skills")
 
     Returns:
         List of skill dicts sorted by name

@@ -1,6 +1,6 @@
 ---
 name: updating-skill-index
-description: Regenerate the Available Skill Index in AGENTS.md by scanning both global (~/.claude/skills/) and local (.claude/skills/) skills. Use when adding a new skill, removing a skill, updating skill descriptions, or when the user mentions "update skill index", "sync agents", or "regenerate index".
+description: Regenerate the Available Skill Index in AGENTS.md by scanning both global (~/.agent/skills/) and local (.agent/skills/) skills. Use when adding a new skill, removing a skill, updating skill descriptions, or when the user mentions "update skill index", "sync agents", or "regenerate index".
 ---
 
 # Skill Index Updater
@@ -11,7 +11,7 @@ Automatically regenerate the "Available Skill Index" section in `AGENTS.md` by s
 
 ```bash
 # Run from any repo with an AGENTS.md
-python3 ~/.claude/skills/skills-index-updater/scripts/update_skill_index.py
+python3 ~/.agent/skills/skills-index-updater/scripts/update_skill_index.py
 ```
 
 ## Prerequisites
@@ -29,8 +29,8 @@ The script scans **two locations**:
 
 | Location | Scope | Description |
 |----------|-------|-------------|
-| `~/.claude/skills/` | Global | Available across all repositories |
-| `./.claude/skills/` | Local | Specific to the current repository |
+| `~/.agent/skills/` | Global | Available across all repositories |
+| `./.agent/skills/` | Local | Specific to the current repository |
 
 Skills are grouped in `AGENTS.md` by scope (Global first, then Local).
 
@@ -42,13 +42,13 @@ Skills are grouped in `AGENTS.md` by scope (Global first, then Local).
 
 ```bash
 cd /path/to/repo
-python3 ~/.claude/skills/skills-index-updater/scripts/update_skill_index.py
+python3 ~/.agent/skills/skills-index-updater/scripts/update_skill_index.py
 ```
 
 The script will:
 1. Find the repo root (looks for `.git` directory)
-2. Scan global skills in `~/.claude/skills/`
-3. Scan local skills in `.claude/skills/`
+2. Scan global skills in `~/.agent/skills/`
+3. Scan local skills in `.agent/skills/`
 4. Parse YAML frontmatter from each `SKILL.md`
 5. Regenerate the index section in `AGENTS.md` (grouped by scope)
 
@@ -72,14 +72,14 @@ grep -A 10 "## Available Skills Index" AGENTS.md
 
 **Console output:**
 ```
-Scanning global skills in: /Users/you/.claude/skills
+Scanning global skills in: /Users/you/.agent/skills
   Found 2 global skills
-Scanning local skills in: /path/to/repo/.claude/skills
+Scanning local skills in: /path/to/repo/.agent/skills
   Found 5 local skills
 
 Total: 7 skills
   Global:
-    - building-claude-skills (skill-builder)
+    - building-agent-skills (skill-builder)
     - updating-skill-index (skills-index-updater)
   Local:
     - extracting-graphrag-knowledge (graphrag-knowledge-extraction)
@@ -97,16 +97,16 @@ Updated: /path/to/repo/AGENTS.md
 ### Global Skills
 *Available across all repositories*
 
-- **Name:** `building-claude-skills`
-  - **Trigger:** Create, evaluate, and improve Claude Code skills...
-  - **Path:** `~/.claude/skills/skill-builder/SKILL.md`
+- **Name:** `building-agent-skills`
+  - **Trigger:** Create, evaluate, and improve Agent skills...
+  - **Path:** `~/.agent/skills/skill-builder/SKILL.md`
 
 ### Local Skills
 *Specific to this repository*
 
 - **Name:** `extracting-graphrag-knowledge`
   - **Trigger:** Extract entities AND relationships from vault files...
-  - **Path:** `.claude/skills/graphrag-knowledge-extraction/SKILL.md`
+  - **Path:** `.agent/skills/graphrag-knowledge-extraction/SKILL.md`
 ```
 
 ---
@@ -114,7 +114,7 @@ Updated: /path/to/repo/AGENTS.md
 ## Quality Rules
 
 - **Descriptions come from frontmatter** — Never manually edit the index
-- **Paths show scope** — Global uses `~/.claude/skills/`, local uses `.claude/skills/`
+- **Paths show scope** — Global uses `~/.agent/skills/`, local uses `.agent/skills/`
 - **Run after every skill change** — Create, delete, or modify triggers update
 
 ---
@@ -127,7 +127,7 @@ Updated: /path/to/repo/AGENTS.md
 | Skill not appearing | Missing frontmatter | Add `name:` and `description:` to SKILL.md |
 | YAML parse error | Invalid frontmatter syntax | Check for tabs, missing colons |
 | Index section not found | Missing marker in AGENTS.md | Add `## Available Skills Index` section |
-| Global skills missing | No `~/.claude/skills/` | Create the directory or ignore if no global skills |
+| Global skills missing | No `~/.agent/skills/` | Create the directory or ignore if no global skills |
 
 ---
 

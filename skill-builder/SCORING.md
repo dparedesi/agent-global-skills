@@ -1,6 +1,6 @@
 # Skill Scoring Rubric
 
-Complete evaluation rubric for scoring Claude Code skills. **Two dimensions:**
+Complete evaluation rubric for scoring Agent skills. **Two dimensions:**
 
 1. **Structure Score** (0-100): Documentation completeness — does it have all the right pieces?
 2. **Efficacy Score** (0-100): Actual effectiveness — does it get the job done brilliantly?
@@ -71,7 +71,7 @@ description missing colon
 
 ## Category 2: Description Quality (15 points)
 
-The description determines when Claude invokes the skill.
+The description determines when the agent invokes the skill.
 
 | Points | Criteria |
 |--------|----------|
@@ -126,7 +126,7 @@ File organization and progressive disclosure.
 
 ## Category 4: Workflow Clarity (15 points)
 
-How clearly the skill guides Claude through the process.
+How clearly the skill guides the agent through the process.
 
 | Points | Criteria |
 |--------|----------|
@@ -522,7 +522,7 @@ Does the skill avoid unsafe actions and respect least privilege?
 - Respects user trust boundaries
 
 > [!CAUTION]
-> A skill extends Claude's capabilities. A poorly designed skill could inadvertently introduce vulnerabilities—leaking sensitive info, permitting unintended actions, or being exploited by malicious inputs. Security is not optional for production skills.
+> A skill extends the agent's capabilities. A poorly designed skill could inadvertently introduce vulnerabilities—leaking sensitive info, permitting unintended actions, or being exploited by malicious inputs. Security is not optional for production skills.
 
 ---
 

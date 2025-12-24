@@ -242,7 +242,7 @@ DATA_DIR = "/Users/specific/path/data"
 
 ### Future-Proofing
 
-- [ ] **12.1** Skill follows Claude Skills spec (frontmatter, folder structure)
+- [ ] **12.1** Skill follows Agent Skills spec (frontmatter, folder structure)
 - [ ] **12.2** Modular design—sections can be updated independently
 - [ ] **12.3** No hardcoded assumptions that will break with workflow changes
 - [ ] **12.4** Documentation is clear enough for someone else to maintain

@@ -26,7 +26,7 @@ This allows:
 
 ## Available Skills
 
-- **skill-builder/** - Create and evaluate Claude Code skills
+- **skill-builder/** - Create and evaluate Agent skills
 - **skills-index-updater/** - Regenerate the skill index
 
 ## Manual Setup (Alternative)
