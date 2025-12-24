@@ -43,9 +43,38 @@ create_symlink() {
     if [ -L "$target" ]; then
         echo -e "${YELLOW}ℹ${NC} Symlink already exists: $target -> $(readlink "$target")"
     elif [ -e "$target" ]; then
-        echo -e "${RED}⚠${NC} $target exists but is not a symlink. Skipping."
-        echo "   To replace, run: rm -rf $target && ln -s $source $target"
-        return 1
+        echo -e "${RED}⚠${NC} $target exists but is not a symlink."
+        echo ""
+        echo "📁 Current contents:"
+        if [ -d "$target" ]; then
+            ls -la "$target" 2>/dev/null | head -20
+            ITEM_COUNT=$(find "$target" -mindepth 1 2>/dev/null | wc -l | tr -d ' ')
+            echo ""
+            if [ "$ITEM_COUNT" -gt 0 ]; then
+                echo -e "${RED}⚠  This folder contains $ITEM_COUNT item(s) that will be DELETED.${NC}"
+            else
+                echo -e "${YELLOW}ℹ${NC} This folder is empty."
+            fi
+        else
+            ls -la "$target" 2>/dev/null
+            echo ""
+            echo -e "${RED}⚠  This file will be DELETED.${NC}"
+        fi
+        echo ""
+        
+        read -p "Do you want to remove $target and create the symlink? [y/N] " -n 1 -r
+        echo ""
+        
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            echo -e "🗑️  Removing $target..."
+            rm -rf "$target"
+            ln -s "$source" "$target"
+            echo -e "${GREEN}✓${NC} Created: $target -> $source"
+        else
+            echo -e "${YELLOW}ℹ${NC} Skipped $target (kept existing content)"
+            add_to_gitignore "$gitignore_entry"
+            return 0
+        fi
     else
         ln -s "$source" "$target"
         echo -e "${GREEN}✓${NC} Created: $target -> $source"

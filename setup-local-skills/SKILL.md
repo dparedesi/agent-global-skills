@@ -123,7 +123,7 @@ grep -E "GEMINI|\.claude" .gitignore
 - **AGENTS.md is the source of truth** — Never edit symlinked files directly
 - **Symlinks must be in .gitignore** — Keep repo clean, only track actual content
 - **Use relative paths** — Symlinks should work regardless of absolute path
-- **Check before creating** — Don't overwrite existing non-symlink files
+- **Confirm before overwriting** — Script shows existing content and asks for Y/N confirmation before removing
 
 ---
 
