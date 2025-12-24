@@ -1,0 +1,558 @@
+# Skill Templates
+
+Starter templates for different skill types. Copy and customize for your needs.
+
+---
+
+## Template 1: Simple Skill
+
+Use for single-capability skills without scripts.
+
+**Structure:**
+```
+skill-name/
+└── SKILL.md
+```
+
+**SKILL.md:**
+
+```markdown
+---
+name: doing-something-specific
+description: [What it does in one sentence]. Use when [trigger context 1], [trigger context 2], or when the user mentions [keyword 1], [keyword 2], or [keyword 3].
+---
+
+# [Skill Title]
+
+[One-sentence summary of what this skill does.]
+
+## Quick Start
+
+[2-3 line summary for returning users]
+
+## How It Works
+
+### Step 1: [First Action]
+[Instructions for step 1]
+
+### Step 2: [Second Action]
+[Instructions for step 2]
+
+### Step 3: [Final Action]
+[Instructions for step 3]
+
+## Examples
+
+**Example 1: [Scenario Name]**
+- Input: [what the user provides]
+- Output: [what the skill produces]
+
+**Example 2: [Scenario Name]**
+- Input: [what the user provides]
+- Output: [what the skill produces]
+
+## Quality Guidelines
+
+- [Guideline 1]
+- [Guideline 2]
+- [Guideline 3]
+```
+
+---
+
+## Template 2: Workflow Skill
+
+Use for multi-step processes with validation points.
+
+**Structure:**
+```
+skill-name/
+├── SKILL.md
+├── REFERENCE.md
+└── EXAMPLES.md
+```
+
+**SKILL.md:**
+
+```markdown
+---
+name: executing-workflow-name
+description: [What it does]. Use when [trigger 1], [trigger 2], or when the user mentions [keywords]. [Optional: scope clarification like "This is for X, not Y."]
+---
+
+# [Workflow Name]
+
+[One-sentence summary.]
+
+## Quick Start (for returning users)
+
+1. [Step 1 summary] → 2. [Step 2 summary] → 3. [Step 3 summary] → Done
+
+## Prerequisites
+
+- [Prerequisite 1]
+- [Prerequisite 2]
+- [Prerequisite 3]
+
+## Workflow Steps
+
+### 1. [First Major Step]
+
+[Detailed instructions]
+
+```bash
+# Command example
+command --with-args
+```
+
+> [!TIP]
+> [Helpful tip for this step]
+
+### 2. [Second Major Step]
+
+[Detailed instructions]
+
+> [!CAUTION]
+> [Important warning for this step]
+
+### 3. [Third Major Step]
+
+[Detailed instructions]
+
+> [!IMPORTANT]
+> [Critical information]
+
+### 4. [Validation Step]
+
+[How to verify success]
+
+## Reference
+
+For complete reference documentation, see **[REFERENCE.md](REFERENCE.md)**.
+
+**Quick reference (most common):**
+
+| Item | Format | Example |
+|------|--------|---------|
+| [Type 1] | [format] | [example] |
+| [Type 2] | [format] | [example] |
+
+## Quality Rules
+
+> [!WARNING]
+> [Most important rule highlighted]
+
+- [Rule 1]
+- [Rule 2]
+- [Rule 3]
+
+## Troubleshooting
+
+| Problem | Cause | Solution |
+|---------|-------|----------|
+| [Issue 1] | [Why it happens] | [How to fix] |
+| [Issue 2] | [Why it happens] | [How to fix] |
+| [Issue 3] | [Why it happens] | [How to fix] |
+
+## Additional Resources
+
+- **[REFERENCE.md](REFERENCE.md)** — Complete reference documentation
+- **[EXAMPLES.md](EXAMPLES.md)** — Detailed examples and common mistakes
+```
+
+**REFERENCE.md:**
+
+```markdown
+# [Skill Name] Reference
+
+Complete reference documentation for [skill name].
+
+## [Category 1]
+
+| Item | Description | Example |
+|------|-------------|---------|
+| [Item 1] | [Description] | [Example] |
+| [Item 2] | [Description] | [Example] |
+
+## [Category 2]
+
+| Item | Description | Example |
+|------|-------------|---------|
+| [Item 1] | [Description] | [Example] |
+| [Item 2] | [Description] | [Example] |
+
+## Conventions
+
+- [Convention 1]
+- [Convention 2]
+
+## Quality Checklist
+
+Before completing, verify:
+
+- [ ] [Check 1]
+- [ ] [Check 2]
+- [ ] [Check 3]
+```
+
+**EXAMPLES.md:**
+
+```markdown
+# [Skill Name] Examples
+
+Real-world examples demonstrating proper usage.
+
+## Example 1: [Scenario Name]
+
+**Context:** [Brief description of the scenario]
+
+**Input:**
+```
+[Input content]
+```
+
+**Output:**
+```
+[Expected output]
+```
+
+**Why this is correct:**
+- [Reason 1]
+- [Reason 2]
+
+---
+
+## Example 2: [Different Scenario]
+
+**Context:** [Brief description]
+
+**Input:**
+```
+[Input content]
+```
+
+**Output:**
+```
+[Expected output]
+```
+
+---
+
+## Common Mistakes
+
+### Mistake 1: [Description]
+
+```
+[Bad example]
+```
+
+**Problem:** [Why this is wrong]
+**Fix:** [How to correct it]
+
+### Mistake 2: [Description]
+
+```
+[Bad example]
+```
+
+**Problem:** [Why this is wrong]
+**Fix:** [How to correct it]
+```
+
+---
+
+## Template 3: Complex Skill with Scripts
+
+Use for skills that include helper scripts.
+
+**Structure:**
+```
+skill-name/
+├── SKILL.md
+├── REFERENCE.md
+├── EXAMPLES.md
+├── TESTING.md
+└── scripts/
+    ├── main_script.py
+    └── helper.py
+```
+
+**scripts/main_script.py:**
+
+```python
+#!/usr/bin/env python3
+"""
+[Script Name] - [Brief description]
+
+This script [what it does in detail].
+
+Usage:
+    python main_script.py --input file.txt
+    python main_script.py --help
+
+Requirements:
+    - Python 3.8+
+    - [Any required packages]
+"""
+
+import argparse
+import json
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+# Configuration constants
+# Explanation: [Why this value was chosen]
+DEFAULT_LIMIT = 50
+
+# Paths relative to script location
+SCRIPT_DIR = Path(__file__).resolve().parent
+DATA_DIR = SCRIPT_DIR.parent.parent.parent / "data"
+
+
+def main_function(input_path: Path) -> dict:
+    """
+    [What this function does].
+
+    Args:
+        input_path: Path to input file
+
+    Returns:
+        Dict with results
+
+    Raises:
+        FileNotFoundError: If input file doesn't exist
+        ValueError: If input format is invalid
+    """
+    if not input_path.exists():
+        raise FileNotFoundError(f"Input file not found: {input_path}")
+
+    # Implementation here
+    return {"status": "success"}
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="[Script description]",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+    python main_script.py --input data.json
+    python main_script.py --input data.json --verbose
+        """
+    )
+    parser.add_argument("--input", "-i", required=True, help="Path to input file")
+    parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
+    args = parser.parse_args()
+
+    try:
+        result = main_function(Path(args.input))
+        print(json.dumps(result, indent=2))
+    except FileNotFoundError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+    except ValueError as e:
+        print(f"Invalid input: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
+```
+
+**TESTING.md:**
+
+```markdown
+# Testing & Evaluation
+
+Testing documentation for [skill name].
+
+## Testing Summary
+
+| Model | Tested | Result |
+|-------|--------|--------|
+| Claude Haiku | Yes/No | [Notes] |
+| Claude Sonnet | Yes/No | [Notes] |
+| Claude Opus | Yes/No | [Notes] |
+
+## Evaluation Scenarios
+
+### Scenario 1: [Basic Use Case]
+
+**Query:** "[Example user query]"
+
+**Expected behaviors:**
+- [ ] [Behavior 1]
+- [ ] [Behavior 2]
+- [ ] [Behavior 3]
+
+**Failure indicators:**
+- [What would indicate failure]
+- [What would indicate failure]
+
+---
+
+### Scenario 2: [Edge Case]
+
+**Query:** "[Example user query]"
+
+**Expected behaviors:**
+- [ ] [Behavior 1]
+- [ ] [Behavior 2]
+
+**Failure indicators:**
+- [What would indicate failure]
+
+---
+
+### Scenario 3: [Error Handling]
+
+**Query:** "[Query that should trigger error handling]"
+
+**Expected behaviors:**
+- [ ] [How errors should be handled]
+- [ ] [What feedback user should receive]
+
+---
+
+## Validation Commands
+
+```bash
+# [Description of what this validates]
+python scripts/main_script.py --help
+
+# [Description of what this validates]
+python scripts/main_script.py --input test_data.json
+```
+
+## Known Edge Cases
+
+| Case | Expected Behavior |
+|------|-------------------|
+| [Edge case 1] | [How to handle] |
+| [Edge case 2] | [How to handle] |
+```
+
+---
+
+## Template 4: Generator Skill
+
+Use for skills that generate artifacts (commits, PRs, reports).
+
+**SKILL.md:**
+
+```markdown
+---
+name: generating-artifact-type
+description: Generate [artifact type] by [method]. Use when [trigger 1], [trigger 2], or when the user asks for [keywords].
+---
+
+# [Artifact Type] Generator
+
+Generate [artifact type] following best practices and conventions.
+
+## Quick Start
+
+1. [Gather info] → 2. [Generate draft] → 3. [Validate] → 4. [Output]
+
+## Generation Process
+
+### 1. Gather Information
+
+[What information to collect]
+
+### 2. Generate Draft
+
+Use this template:
+
+```
+[Template structure]
+```
+
+### 3. Validate
+
+Check against:
+- [ ] [Validation rule 1]
+- [ ] [Validation rule 2]
+- [ ] [Validation rule 3]
+
+### 4. Output
+
+[How to present the final result]
+
+## Template
+
+```
+[Complete template with placeholders]
+```
+
+## Examples
+
+### Example 1: [Type]
+
+**Input:** [Description]
+
+**Generated Output:**
+```
+[Example output]
+```
+
+### Example 2: [Type]
+
+**Input:** [Description]
+
+**Generated Output:**
+```
+[Example output]
+```
+
+## Quality Standards
+
+- [Standard 1]
+- [Standard 2]
+- [Standard 3]
+
+## Anti-Patterns
+
+- [What NOT to do 1]
+- [What NOT to do 2]
+```
+
+---
+
+## Common Skill Patterns
+
+When building a skill, choose the pattern that best fits its purpose:
+
+### Pattern: Workflow Skill
+For multi-step processes with validation loops.
+- Numbered steps (1, 2, 3...)
+- Callouts for warnings/tips
+- Checkpoints between major phases
+- Troubleshooting table at the end
+
+### Pattern: Reference Skill
+For API documentation or domain knowledge.
+- Quick start at the top
+- Detailed reference in REFERENCE.md
+- Examples organized by use case
+- Search-friendly headings
+
+### Pattern: Generator Skill
+For creating artifacts (commits, PRs, reports).
+- Template structure in SKILL.md
+- Input/output examples
+- Validation rules
+- Format specifications
+
+---
+
+## Naming Conventions
+
+| Element | Convention | Example |
+|---------|------------|---------|
+| Folder name | noun-form-hyphenated | `graphrag-knowledge-extraction` |
+| `name` field | gerund-form-hyphenated | `extracting-graphrag-knowledge` |
+| SKILL.md title | Title Case | `GraphRAG Knowledge Extraction Workflow` |
+| Script files | snake_case.py | `find_unprocessed_files.py` |
+| Supporting docs | UPPERCASE.md | `REFERENCE.md`, `EXAMPLES.md` |
