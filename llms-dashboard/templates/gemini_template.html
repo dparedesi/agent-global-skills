@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Usage Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@sgratzl/chartjs-chart-boxplot@4"></script>
+    <style>
+        body { background-color: #0f1117; color: #e5e7eb; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .card { background-color: #1e293b; border: 1px solid #334155; border-radius: 12px; transition: transform 0.2s; }
+        .card:hover { border-color: #60a5fa; transform: translateY(-2px); }
+        .stat-value { font-size: 1.5rem; font-weight: 700; color: #f8fafc; }
+        .stat-label { font-size: 0.875rem; color: #94a3b8; }
+        .highlight-blue { color: #60a5fa; }
+        .highlight-purple { color: #c084fc; }
+        .badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+        .badge-blue { background-color: #1e40af; color: #dbeafe; }
+        .badge-gray { background-color: #374151; color: #d1d5db; }
+    </style>
+</head>
+<body class="p-6">
+
+    <!-- Header -->
+    <header class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-700 pb-4 gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-white">Gemini Usage Dashboard</h1>
+            <p class="text-gray-400">
+                <span class="text-blue-400 font-semibold">{{USER_EMAIL}}</span>
+            </p>
+        </div>
+        <div class="text-right">
+            <div class="text-sm text-gray-500">Dashboard Updated</div>
+            <div class="font-mono text-xl text-white">{{TIMESTAMP}}</div>
+        </div>
+    </header>
+
+    <!-- Key Metrics Row -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+        <div class="card p-4">
+            <div class="stat-label">Total Sessions</div>
+            <div class="stat-value">{{TOTAL_SESSIONS}}</div>
+        </div>
+        <div class="card p-4">
+            <div class="stat-label">Total Messages</div>
+            <div class="stat-value highlight-blue">{{TOTAL_MESSAGES}}</div>
+        </div>
+        <div class="card p-4">
+            <div class="stat-label">User Messages</div>
+            <div class="stat-value">{{USER_MESSAGES}}</div>
+        </div>
+        <div class="card p-4">
+            <div class="stat-label">Total Duration</div>
+            <div class="stat-value highlight-purple">{{TOTAL_DURATION}}</div>
+        </div>
+        <div class="card p-4">
+            <div class="stat-label">Total Tokens</div>
+            <div class="stat-value highlight-blue">{{TOTAL_TOKENS}}</div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="card p-4">
+            <h3 class="text-lg font-semibold mb-4 text-gray-300">Activity Over Time (Sessions)</h3>
+            <canvas id="sessionsChart"></canvas>
+        </div>
+        <div class="card p-4">
+            <h3 class="text-lg font-semibold mb-4 text-gray-300">Message Volume</h3>
+            <canvas id="messagesChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Token Chart Row -->
+    <div class="grid grid-cols-1 gap-6 mb-8">
+        <div class="card p-4">
+            <h3 class="text-lg font-semibold mb-4 text-gray-300">Token Usage (Input vs Output)</h3>
+            <canvas id="tokensChart" height="100"></canvas>
+        </div>
+    </div>
+
+    <!-- Duration Boxplot Row -->
+    <div class="grid grid-cols-1 gap-6 mb-8">
+        <div class="card p-4">
+            <h3 class="text-lg font-semibold mb-4 text-gray-300">Session Duration Distribution (Minutes)</h3>
+            <canvas id="durationChart" height="100"></canvas>
+        </div>
+    </div>
+
+    <!-- Recent Sessions Table -->
+    <div class="card p-6 overflow-hidden">
+        <h3 class="text-xl font-bold mb-4 text-white">Recent Sessions</h3>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="text-gray-400 border-b border-gray-700">
+                        <th class="p-3">Type</th>
+                        <th class="p-3">Date</th>
+                        <th class="p-3">Duration</th>
+                        <th class="p-3">Messages</th>
+                        <th class="p-3">Tokens (In/Out)</th>
+                        <th class="p-3">Summary</th>
+                    </tr>
+                </thead>
+                <tbody class="text-sm text-gray-300">
+                    {{RECENT_SESSIONS_ROWS}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Data injected from Python
+        const dates = {{CHART_DATES}};
+        const sessionCounts = {{CHART_SESSIONS}};
+        const messageCounts = {{CHART_MESSAGES}};
+        const inputTokens = {{CHART_INPUT_TOKENS}};
+        const outputTokens = {{CHART_OUTPUT_TOKENS}};
+        const durations = {{CHART_DURATIONS}};
+
+        // Common Chart Options
+        const commonOptions = {
+            responsive: true,
+            plugins: { legend: { labels: { color: '#9ca3af' } } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: '#334155' }, ticks: { color: '#9ca3af' } },
+                x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+            }
+        };
+
+        // Sessions Chart
+        new Chart(document.getElementById('sessionsChart'), {
+            type: 'line',
+            data: {
+                labels: dates,
+                datasets: [{
+                    label: 'Sessions',
+                    data: sessionCounts,
+                    borderColor: '#60a5fa',
+                    backgroundColor: 'rgba(96, 165, 250, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                ...commonOptions,
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        // Messages Chart
+        new Chart(document.getElementById('messagesChart'), {
+            type: 'bar',
+            data: {
+                labels: dates,
+                datasets: [{
+                    label: 'Messages',
+                    data: messageCounts,
+                    backgroundColor: '#c084fc',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                ...commonOptions,
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        // Tokens Chart
+        new Chart(document.getElementById('tokensChart'), {
+            type: 'bar',
+            data: {
+                labels: dates,
+                datasets: [
+                    {
+                        label: 'Input Tokens',
+                        data: inputTokens,
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Output Tokens',
+                        data: outputTokens,
+                        backgroundColor: '#10b981',
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                ...commonOptions,
+                scales: {
+                    x: { stacked: true, grid: { display: false }, ticks: { color: '#9ca3af' } },
+                    y: { stacked: true, beginAtZero: true, grid: { color: '#334155' }, ticks: { color: '#9ca3af' } }
+                }
+            }
+        });
+
+        // Duration Boxplot Chart
+        new Chart(document.getElementById('durationChart'), {
+            type: 'boxplot',
+            data: {
+                labels: dates,
+                datasets: [{
+                    label: 'Session Duration (Minutes)',
+                    data: durations,
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1,
+                    outlierColor: '#999999',
+                    padding: 10,
+                    itemRadius: 0
+                }]
+            },
+            options: {
+                ...commonOptions,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const v = context.parsed;
+                                return `Min: ${v.min.toFixed(1)}, Q1: ${v.q1.toFixed(1)}, Median: ${v.median.toFixed(1)}, Q3: ${v.q3.toFixed(1)}, Max: ${v.max.toFixed(1)}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#334155' },
+                        ticks: { color: '#9ca3af' },
+                        max: {{Y_AXIS_MAX}}
+                    },
+                    x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

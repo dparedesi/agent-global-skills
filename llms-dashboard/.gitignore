@@ -1,0 +1,11 @@
+# Generated dashboards with personal data (excluded from git)
+claude_dashboard.html
+gemini_dashboard.html
+vscode_dashboard.html
+
+# Aggregated history data (generated locally)
+data/*.json
+
+# Python cache
+__pycache__/
+*.pyc
