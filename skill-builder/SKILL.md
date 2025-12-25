@@ -1,5 +1,5 @@
 ---
-name: building-agent-skills
+name: skill-builder
 description: Create, evaluate, and improve Agent skills to production quality (100/100). Use when the user wants to create a new skill, review an existing skill, score a skill against best practices, or improve a skill's quality. Also use when the user mentions skill development, skill templates, or skill optimization.
 ---
 
@@ -69,7 +69,7 @@ Ask the user:
 ### Step 3: Write the SKILL.md
 
 Use templates from [TEMPLATES.md](~/.agent/skills/skill-builder/TEMPLATES.md). Ensure:
-1. **Frontmatter** — valid YAML with `name` (gerund form) and `description`
+1. **Frontmatter** — valid YAML with `name` (must match folder name) and `description`
 2. **Description** — includes BOTH what it does AND when to use it
 3. **"Why?" line** — one sentence after title explaining the problem this solves
 4. **Workflow** — clear, numbered steps
@@ -77,6 +77,17 @@ Use templates from [TEMPLATES.md](~/.agent/skills/skill-builder/TEMPLATES.md). E
 
 > [!TIP]
 > Description is critical for discovery. Include multiple trigger keywords.
+
+#### Step 3.a: Register the Skill
+
+> [!CRITICAL]
+> **Do NOT edit AGENTS.md manually.**
+
+1. Run the `skills-index-updater` skill or script:
+    ```bash
+    python3 ~/.agent/skills/skills-index-updater/scripts/update_skill_index.py
+    ```
+2. Verify `AGENTS.md` contains your new/updated skill.
 
 After creating, proceed to **Step 4** to evaluate.
 
@@ -138,7 +149,7 @@ Work systematically:
 ## Validation Checklist (Quick)
 
 Before declaring complete:
-- [ ] `name` uses gerund form (verb + -ing)
+- [ ] `name` in frontmatter matches folder name
 - [ ] `description` includes what AND when
 - [ ] **"Why?" line** present after title
 - [ ] SKILL.md under 500 lines

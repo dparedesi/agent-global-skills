@@ -1,5 +1,5 @@
 ---
-name: setting-up-local-skills
+name: skills-local-setup
 description: Set up AI tool symlinks in a repository for multi-agent compatibility. Use when the user wants to set up skills for Gemini, Claude, or other AI tools, or when they mention "setup skills", "configure agents", or "link AGENTS.md".
 ---
 
@@ -13,7 +13,7 @@ Create symlinks so multiple AI tools can use the same skill definitions from `.a
 
 ```bash
 # Run from any repo root (script is in the global skill location)
-~/.claude/skills/setup-local-skills/scripts/setup-local-skills.sh [gemini|claude|all]
+~/.claude/skills/skills-local-setup/scripts/skills-local-setup.sh [gemini|claude|all]
 ```
 
 ---
@@ -37,24 +37,19 @@ Create symlinks so multiple AI tools can use the same skill definitions from `.a
 
 ```bash
 # From repo root — script lives in the global skills directory
-~/.claude/skills/setup-local-skills/scripts/setup-local-skills.sh [gemini|claude|all]
+~/.claude/skills/skills-local-setup/scripts/skills-local-setup.sh [gemini|claude|all]
 ```
 
 The script automatically:
-- Validates prerequisites (git repo, AGENTS.md exists)
+- Validates prerequisites (git repo)
+- Creates `.agent/skills/` directory if it doesn't exist
 - Creates symlinks with relative paths
 - Safely adds entries to `.gitignore` (handles missing newlines)
 - Asks for Y/N confirmation before overwriting existing files
 
 > [!TIP]
-> If `.agent/skills/` doesn't exist locally, symlinks will reference global `~/.agent/skills/` via AGENTS.md.
+> If `AGENTS.md` doesn't exist when setting up Gemini, the script will instruct you to run the `skills-index-updater` skill first to create it.
 
-> [!IMPORTANT]
-> When adding to `.gitignore` manually, ensure the file ends with a newline first:
-> ```bash
-> [ -n "$(tail -c1 .gitignore 2>/dev/null)" ] && echo >> .gitignore
-> echo "ENTRY" >> .gitignore
-> ```
 
 ---
 
@@ -106,5 +101,5 @@ Before considering setup complete:
 | Symlink broken after clone | Absolute path used | Recreate with relative path |
 | Changes not syncing | Editing symlink, not source | Edit `AGENTS.md` or `.agent/` directly |
 | Git tracking symlink | Missing .gitignore entry | Add entry to .gitignore |
-| Entries concatenated in .gitignore | File didn't end with newline | Use safe append pattern (see Workflow section) |
+| AGENTS.md not found | Missing AGENTS.md file | Run `/skills-index-updater` skill first |
 

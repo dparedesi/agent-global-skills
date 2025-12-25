@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Setup Local Skills - Create symlinks for AI tools in the current repository
-# Usage: ./setup-local-skills.sh [gemini|claude|all]
+# Skills Local Setup - Create symlinks for AI tools in the current repository
+# Usage: ./skills-local-setup.sh [gemini|claude|all]
 
 set -e
 
@@ -87,12 +87,17 @@ create_symlink() {
 setup_gemini() {
     echo ""
     echo "🔷 Setting up Gemini..."
-    
+
     if [ ! -f AGENTS.md ]; then
-        echo -e "${RED}Error: AGENTS.md not found in repo root${NC}"
+        echo -e "${YELLOW}ℹ${NC} AGENTS.md not found in repo root."
+        echo ""
+        echo "📋 AGENT INSTRUCTION: Please use the 'skills-index-updater' skill to create AGENTS.md first."
+        echo "   Run: /skills-index-updater"
+        echo "   Then re-run this setup script."
+        echo ""
         return 1
     fi
-    
+
     create_symlink "AGENTS.md" "GEMINI.md" "GEMINI.md"
 }
 
@@ -100,17 +105,17 @@ setup_gemini() {
 setup_claude() {
     echo ""
     echo "🟣 Setting up Claude..."
-    
+
     mkdir -p .claude
-    
-    # Skills symlink
-    if [ -d .agent/skills ]; then
-        create_symlink "../.agent/skills" ".claude/skills" ".claude/"
-    elif [ -d "$HOME/.agent/skills" ]; then
-        echo -e "${YELLOW}ℹ${NC} No local .agent/skills, skipping (global skills available via ~/.agent/skills)"
-    else
-        echo -e "${YELLOW}ℹ${NC} No .agent/skills directory found, skipping skills symlink"
+
+    # Skills symlink - create .agent/skills if it doesn't exist
+    if [ ! -d .agent/skills ]; then
+        echo -e "${YELLOW}ℹ${NC} Creating .agent/skills/ directory..."
+        mkdir -p .agent/skills
+        echo -e "${GREEN}✓${NC} Created .agent/skills/"
     fi
+
+    create_symlink "../.agent/skills" ".claude/skills" ".claude/"
     
     # Settings symlink
     if [ -f .agent/settings.json ]; then

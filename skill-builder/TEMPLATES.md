@@ -18,7 +18,7 @@ skill-name/
 
 ```markdown
 ---
-name: doing-something-specific
+name: skill-folder-name
 description: [What it does in one sentence]. Use when [trigger context 1], [trigger context 2], or when the user mentions [keyword 1], [keyword 2], or [keyword 3].
 ---
 
@@ -78,7 +78,7 @@ skill-name/
 
 ```markdown
 ---
-name: executing-workflow-name
+name: workflow-skill-folder-name
 description: [What it does]. Use when [trigger 1], [trigger 2], or when the user mentions [keywords]. [Optional: scope clarification like "This is for X, not Y."]
 ---
 
@@ -447,7 +447,7 @@ Use for skills that generate artifacts (commits, PRs, reports).
 
 ```markdown
 ---
-name: generating-artifact-type
+name: artifact-generator-folder-name
 description: Generate [artifact type] by [method]. Use when [trigger 1], [trigger 2], or when the user asks for [keywords].
 ---
 
@@ -557,8 +557,8 @@ For creating artifacts (commits, PRs, reports).
 
 | Element | Convention | Example |
 |---------|------------|---------|
-| Folder name | noun-form-hyphenated | `graphrag-knowledge-extraction` |
-| `name` field | gerund-form-hyphenated | `extracting-graphrag-knowledge` |
+| Folder name | hyphenated-name (source of truth) | `graphrag-knowledge-extraction` |
+| `name` field | must match folder name | `graphrag-knowledge-extraction` |
 | SKILL.md title | Title Case | `GraphRAG Knowledge Extraction Workflow` |
 | Script files | snake_case.py | `find_unprocessed_files.py` |
 | Supporting docs | UPPERCASE.md | `REFERENCE.md`, `EXAMPLES.md` |

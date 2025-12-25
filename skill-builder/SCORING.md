@@ -32,8 +32,8 @@ The YAML frontmatter is required for the skill to load.
 |--------|----------|
 | 0 | Missing frontmatter or invalid YAML syntax |
 | 5 | Has frontmatter but missing required fields |
-| 10 | Has `name` and `description` but name doesn't use gerund form |
-| 15 | Valid YAML, has `name` (gerund form) and `description`, no syntax errors |
+| 10 | Has `name` and `description` but name doesn't match folder name |
+| 15 | Valid YAML, has `name` (matches folder name) and `description`, no syntax errors |
 
 **Validation rules:**
 - `name`: max 64 chars, lowercase letters/numbers/hyphens only
@@ -43,13 +43,13 @@ The YAML frontmatter is required for the skill to load.
 **Examples:**
 
 ```yaml
-# 15 points - Perfect
+# 15 points - Perfect (folder: generating-commit-messages/)
 ---
 name: generating-commit-messages
 description: Generate descriptive commit messages from git diffs. Use when writing commits or reviewing staged changes.
 ---
 
-# 10 points - Name not gerund
+# 10 points - Name doesn't match folder
 ---
 name: commit-generator
 description: Generate descriptive commit messages from git diffs.
@@ -275,7 +275,7 @@ Use this worksheet when evaluating a skill:
 
 ### Frontmatter (15 points)
 - [ ] Valid YAML syntax
-- [ ] `name` field present and uses gerund form
+- [ ] `name` field present and matches folder name
 - [ ] `description` field present and non-empty
 - [ ] No reserved words or XML tags
 **Score: __/15**

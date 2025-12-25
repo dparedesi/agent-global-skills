@@ -1,5 +1,5 @@
 ---
-name: updating-skill-index
+name: skills-index-updater
 description: Regenerate the Available Skill Index in AGENTS.md by scanning both global (~/.agent/skills/) and local (.agent/skills/) skills. Use when adding a new skill, removing a skill, updating skill descriptions, or when the user mentions "update skill index", "sync agents", or "regenerate index".
 ---
 
@@ -79,8 +79,8 @@ Scanning local skills in: /path/to/repo/.agent/skills
 
 Total: 7 skills
   Global:
-    - building-agent-skills (skill-builder)
-    - updating-skill-index (skills-index-updater)
+    - skill-builder (skill-builder)
+    - skills-index-updater (skills-index-updater)
   Local:
     - extracting-graphrag-knowledge (graphrag-knowledge-extraction)
     - preparing-1to1-meetings (prep-1to1)
@@ -97,7 +97,7 @@ Updated: /path/to/repo/AGENTS.md
 ### Global Skills
 *Available across all repositories*
 
-- **Name:** `building-agent-skills`
+- **Name:** `skill-builder`
   - **Trigger:** Create, evaluate, and improve Agent skills...
   - **Path:** `~/.agent/skills/skill-builder/SKILL.md`
 

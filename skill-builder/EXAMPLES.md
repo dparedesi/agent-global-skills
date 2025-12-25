@@ -33,7 +33,7 @@ This skill extracts entities from files.
 
 ```markdown
 ---
-name: extracting-document-entities
+name: document-entity-extraction
 description: Extract named entities (people, organizations, locations) from document files. Use when processing documents for NER, building entity databases, or when the user mentions entity extraction, named entity recognition, or document parsing.
 ---
 
@@ -54,7 +54,7 @@ Read the full document content...
 ```
 
 **Changes made:**
-1. Added `name` field with gerund form
+1. Added `name` field matching folder name
 2. Enhanced description with triggers and keywords
 3. Added Quick Start
 4. Expanded workflow with details
@@ -359,7 +359,7 @@ git diff HEAD~1 | claude "review this"
 | Issue | Pattern | Example |
 |-------|---------|---------|
 | Vague description | Add "Use when..." clause | "Process files. Use when..." |
-| Missing name | Add gerund form | `name: processing-files` |
+| Missing name | Match folder name | `name: processing-files` (for `processing-files/` folder) |
 | No examples | Add 2-3 diverse examples | Happy path + edge case + error |
 | Long SKILL.md | Split into REFERENCE.md + EXAMPLES.md | Keep workflow, move tables |
 | Script errors | Add try/except with helpful messages | "File not found: {path}" |

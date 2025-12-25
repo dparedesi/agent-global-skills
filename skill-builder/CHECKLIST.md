@@ -38,7 +38,7 @@ head -20 SKILL.md | grep -E "^(---|name:|description:)"
 
 ### Format Requirements
 
-- [ ] **2.1** Name uses gerund form (ends conceptually in -ing action)
+- [ ] **2.1** Name matches folder name (source of truth)
 - [ ] **2.2** Name is lowercase
 - [ ] **2.3** Name uses hyphens between words (not underscores)
 - [ ] **2.4** Name is under 64 characters
@@ -48,9 +48,9 @@ head -20 SKILL.md | grep -E "^(---|name:|description:)"
 
 | Valid | Invalid |
 |-------|---------|
-| `generating-commits` | `commit-generator` (not gerund) |
-| `extracting-entities` | `Extracting-Entities` (uppercase) |
-| `processing-files` | `processing_files` (underscores) |
+| `processing-files` (matches folder) | `process-files` (doesn't match folder) |
+| `entity-extraction` | `Entity-Extraction` (uppercase) |
+| `graphrag-knowledge` | `graphrag_knowledge` (underscores) |
 
 ---
 
