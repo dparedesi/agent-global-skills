@@ -10,11 +10,8 @@ Automatically regenerate the "Available Skill Index" section in `AGENTS.md` by s
 ## Quick Start
 
 ```bash
-# Default: always prompts user about global skills
+# Run from any repo - ALWAYS prompts for user confirmation
 python3 ~/.agent/skills/skills-index-updater/scripts/update_skill_index.py
-
-# Skip prompt - local skills only (for CI/automation)
-python3 ~/.agent/skills/skills-index-updater/scripts/update_skill_index.py --local-only
 ```
 
 ## Prerequisites
@@ -48,24 +45,23 @@ Would you like to include global skills as well? [y/N]:
 - Press **Enter** or type **n** → Local-only mode (recommended for open-source repos)
 - Type **y** → Include global skills (for personal/private repos)
 
-> **There is NO flag to bypass this prompt and include global skills.** This is intentional to prevent AI agents from auto-including personal skills in shared repositories.
+> **There is NO flag to bypass this prompt.** This is intentional to prevent AI agents from running unattended.
 
-### Non-Interactive Mode
+### Available Flags
 
 | Flag | Short | Behavior |
 |------|-------|----------|
-| `--local-only` | `-l` | Skip global skills, no prompt |
 | `--dry-run` | `-n` | Show changes without writing |
 | `--init` | | Create AGENTS.md if missing |
 
-> **Why local-only by default?** Open-source repositories should only reference skills that exist in the repo itself. Users who clone your repo won't have access to your personal global skills.
+> **Why require confirmation?** Open-source repositories should only reference skills that exist in the repo itself. Users who clone your repo won't have access to your personal global skills. The prompt ensures a human makes this decision.
 
 ### ⚠️ AI Agent Behavior
 
-AI agents **cannot bypass** the global skills prompt. When an AI runs this script:
-- It will hit the interactive prompt and must wait for user input
-- Using `--local-only` is the only way to run non-interactively
-- This ensures the **user always decides** whether to expose their global skills
+**AI agents CANNOT run this script unattended.** The interactive prompt is mandatory:
+- No flags exist to skip the prompt
+- The script will block until a human types `y` or `n`
+- This ensures the **user always decides** what goes into AGENTS.md
 
 ---
 

@@ -286,11 +286,6 @@ def main():
         action="store_true",
         help="Create AGENTS.md if it doesn't exist (auto-prompted if missing)"
     )
-    parser.add_argument(
-        "--local-only", "-l",
-        action="store_true",
-        help="Only include local skills (skip global skills prompt)"
-    )
     args = parser.parse_args()
 
     # Check we're in a repo
@@ -314,16 +309,11 @@ def main():
                 sys.exit(1)
 
     # Determine whether to include global skills
-    # ALWAYS prompt the user - no way to bypass this (prevents AI agents from auto-including)
-    include_global = False
-    if args.local_only:
-        print("Skipping global skills (--local-only mode)")
-    else:
-        # Interactive prompt - REQUIRED for including global skills
-        print("\n" + "="*60)
-        response = input("Would you like to include global skills as well? [y/N]: ").strip().lower()
-        print("="*60 + "\n")
-        include_global = response in ("y", "yes")
+    # ALWAYS prompt the user - NO FLAGS can bypass this (prevents AI agents from running unattended)
+    print("\n" + "="*60)
+    response = input("Include global skills from ~/.agent/skills/? [y/N]: ").strip().lower()
+    print("="*60 + "\n")
+    include_global = response in ("y", "yes")
 
     # Scan global skills (only if user confirmed)
     global_skills = []
@@ -331,7 +321,7 @@ def main():
         print(f"Scanning global skills in: {GLOBAL_SKILLS_DIR}")
         global_skills = scan_skills_dir(GLOBAL_SKILLS_DIR, "global", GLOBAL_SKILLS_PATH_PREFIX)
         print(f"  Found {len(global_skills)} global skills")
-    elif not args.local_only:
+    else:
         print("Skipping global skills (user declined)")
 
     # Scan local skills
