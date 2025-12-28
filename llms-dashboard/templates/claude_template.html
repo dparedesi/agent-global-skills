@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Claude Code Dashboard</title>
+    <title>Claude Code Dashboard - Comprehensive</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -20,11 +20,14 @@
         .badge-purple { background-color: #6b21a8; color: #f3e8ff; }
         .badge-orange { background-color: #c2410c; color: #ffedd5; }
         .badge-gray { background-color: #374151; color: #d1d5db; }
+        .badge-cyan { background-color: #155e75; color: #cffafe; }
         .model-haiku { background-color: rgba(74, 222, 128, 0.2); border-left: 3px solid #4ade80; }
         .model-sonnet { background-color: rgba(168, 85, 247, 0.2); border-left: 3px solid #a855f7; }
         .model-opus { background-color: rgba(251, 146, 60, 0.2); border-left: 3px solid #fb923c; }
         .progress-bar { background-color: #374151; border-radius: 9999px; height: 8px; overflow: hidden; }
         .progress-fill { height: 100%; border-radius: 9999px; transition: width 0.3s ease; }
+        .section-title { font-size: 1.5rem; font-weight: 700; color: white; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .data-source-badge { font-size: 0.65rem; padding: 0.15rem 0.5rem; background-color: #374151; border-radius: 9999px; color: #9ca3af; }
     </style>
 </head>
 <body class="p-6">
@@ -33,8 +36,9 @@
     <header class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-700 pb-4 gap-4">
         <div>
             <h1 class="text-3xl font-bold text-white">Claude Code Dashboard</h1>
+            <p class="text-sm text-gray-500 mb-2">Comprehensive Edition - All Data Sources</p>
             <p class="text-gray-400">
-                <span id="userName" class="text-blue-400 font-semibold">{{USER_NAME}}</span> 
+                <span id="userName" class="text-blue-400 font-semibold">{{USER_NAME}}</span>
                 <span class="text-gray-500">({{USER_EMAIL}})</span>
             </p>
             <div class="flex flex-wrap gap-2 mt-2">
@@ -52,7 +56,7 @@
     </header>
 
     <!-- Key Metrics Row -->
-    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-8">
         <div class="card p-4">
             <div class="stat-label">Startups</div>
             <div class="stat-value">{{NUM_STARTUPS}}</div>
@@ -60,6 +64,16 @@
         <div class="card p-4">
             <div class="stat-label">Projects</div>
             <div class="stat-value text-blue-400">{{NUM_PROJECTS}}</div>
+        </div>
+        <div class="card p-4">
+            <div class="stat-label">Main Sessions</div>
+            <div class="stat-value text-green-400">{{MAIN_SESSIONS}}</div>
+            <div class="text-xs text-gray-500">User-initiated</div>
+        </div>
+        <div class="card p-4">
+            <div class="stat-label">Agent Sessions</div>
+            <div class="stat-value text-purple-400">{{AGENT_SESSIONS}}</div>
+            <div class="text-xs text-gray-500">Sub-agents</div>
         </div>
         <div class="card p-4">
             <div class="stat-label">Total Cost</div>
@@ -79,10 +93,82 @@
         </div>
     </div>
 
+    <!-- Session & Command Stats Row -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div class="card p-5">
+            <div class="flex items-center gap-2 mb-3">
+                <span class="text-2xl">🏆</span>
+                <h3 class="font-semibold text-white">Longest Session</h3>
+            </div>
+            <div class="space-y-2">
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Messages:</span>
+                    <span class="text-yellow-400 font-bold text-xl">{{LONGEST_SESSION_MSGS}}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Duration:</span>
+                    <span class="text-white font-semibold">{{LONGEST_SESSION_DURATION}}</span>
+                </div>
+            </div>
+            <div class="mt-2 text-xs text-gray-500">From stats-cache.json</div>
+        </div>
+
+        <div class="card p-5">
+            <div class="flex items-center gap-2 mb-3">
+                <span class="text-2xl">💬</span>
+                <h3 class="font-semibold text-white">Command History</h3>
+            </div>
+            <div class="space-y-2">
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Total Commands:</span>
+                    <span class="text-blue-400 font-bold">{{TOTAL_COMMANDS}}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Avg Prompt Length:</span>
+                    <span class="text-white">{{AVG_PROMPT_LENGTH}} chars</span>
+                </div>
+            </div>
+            <div class="mt-2 text-xs text-gray-500">From history.jsonl</div>
+        </div>
+
+        <div class="card p-5">
+            <div class="flex items-center gap-2 mb-3">
+                <span class="text-2xl">⚡</span>
+                <h3 class="font-semibold text-white">Session Performance</h3>
+            </div>
+            <div class="space-y-2">
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Avg Duration:</span>
+                    <span class="text-white font-bold">{{AVG_DURATION}}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Avg API Response:</span>
+                    <span class="text-white">{{AVG_API_DURATION}}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card p-5">
+            <div class="flex items-center gap-2 mb-3">
+                <span class="text-2xl">🔍</span>
+                <h3 class="font-semibold text-white">Features Used</h3>
+            </div>
+            <div class="space-y-2">
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Prompt Queue:</span>
+                    <span class="text-purple-400 font-bold">{{PROMPT_QUEUE_COUNT}}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Web Searches:</span>
+                    <span class="text-blue-400">{{TOTAL_WEB_SEARCHES}}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Model Usage Summary -->
-    <h2 class="text-2xl font-bold mb-4 text-white">Model Usage Summary</h2>
+    <h2 class="section-title">Model Usage Summary</h2>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <!-- Haiku -->
         <div class="card p-5 model-haiku">
             <div class="flex justify-between items-center mb-3">
                 <h3 class="font-semibold text-green-400 text-lg">Haiku 4.5</h3>
@@ -103,8 +189,7 @@
                 </div>
             </div>
         </div>
-        
-        <!-- Sonnet -->
+
         <div class="card p-5 model-sonnet">
             <div class="flex justify-between items-center mb-3">
                 <h3 class="font-semibold text-purple-400 text-lg">Sonnet 4.5</h3>
@@ -125,8 +210,7 @@
                 </div>
             </div>
         </div>
-        
-        <!-- Opus -->
+
         <div class="card p-5 model-opus">
             <div class="flex justify-between items-center mb-3">
                 <h3 class="font-semibold text-orange-400 text-lg">Opus 4.5</h3>
@@ -149,7 +233,7 @@
         </div>
     </div>
 
-    <!-- Cache & Performance -->
+    <!-- Cache & Tool Usage Row -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <div class="card p-6">
             <h3 class="text-lg font-semibold mb-4 text-gray-200">Cache Efficiency</h3>
@@ -181,27 +265,13 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="card p-6">
-            <h3 class="text-lg font-semibold mb-4 text-gray-200">Session Performance</h3>
-            <div class="space-y-3">
-                <div class="flex justify-between">
-                    <span class="text-gray-400">Avg Session Duration:</span>
-                    <span class="text-white font-bold">{{AVG_DURATION}}</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-400">Avg API Response Time:</span>
-                    <span class="text-white font-bold">{{AVG_API_DURATION}}</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-400">Prompt Queue Usage:</span>
-                    <span class="text-blue-400 font-bold">{{PROMPT_QUEUE_COUNT}}</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-400">Web Searches:</span>
-                    <span class="text-purple-400 font-bold">{{TOTAL_WEB_SEARCHES}}</span>
-                </div>
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-200">Tool Usage</h3>
+                <span class="data-source-badge">from transcripts</span>
             </div>
+            <canvas id="toolUsageChart" height="200"></canvas>
         </div>
     </div>
 
@@ -211,10 +281,25 @@
             <h3 class="text-lg font-semibold mb-4 text-gray-200">Cost by Model</h3>
             <canvas id="modelCostChart"></canvas>
         </div>
-        
+
+        <div class="card p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-200">Slash Commands Used</h3>
+                <span class="data-source-badge">from history.jsonl</span>
+            </div>
+            <canvas id="slashCommandsChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Token & Session Distribution -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <div class="card p-6">
             <h3 class="text-lg font-semibold mb-4 text-gray-200">Cost by Project</h3>
             <canvas id="projectCostChart"></canvas>
+        </div>
+        <div class="card p-6">
+            <h3 class="text-lg font-semibold mb-4 text-gray-200">Session Type Breakdown</h3>
+            <canvas id="sessionBreakdownChart"></canvas>
         </div>
     </div>
 
@@ -225,14 +310,14 @@
     </div>
 
     <!-- Historical Charts Section -->
-    <h2 class="text-2xl font-bold mb-4 text-white">📈 Historical Trends</h2>
-    
+    <h2 class="section-title">📈 Historical Trends</h2>
+
     <!-- Daily Activity Trend -->
     <div class="card p-6 mb-6">
         <h3 class="text-lg font-semibold mb-4 text-gray-200">Daily Activity Trend</h3>
         <canvas id="dailyActivityChart" height="80"></canvas>
     </div>
-    
+
     <!-- Model Usage Over Time & Session Distribution -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div class="card p-6">
@@ -244,19 +329,22 @@
             <canvas id="sessionLengthChart"></canvas>
         </div>
     </div>
-    
+
     <!-- Project Comparison -->
     <div class="card p-6 mb-6">
         <h3 class="text-lg font-semibold mb-4 text-gray-200">Project Comparison (Messages)</h3>
         <canvas id="projectComparisonChart" height="80"></canvas>
     </div>
-    
-    <!-- Rolling Averages Row -->
+
+    <!-- Hour of Day Activity -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <div class="card p-6">
-            <h3 class="text-lg font-semibold mb-2 text-gray-200">Hour of Day Activity</h3>
-            <p class="text-xs text-gray-500 mb-4">7-day rolling average (UTC)</p>
-            <canvas id="hourlyRollingChart"></canvas>
+            <div class="flex justify-between items-center mb-2">
+                <h3 class="text-lg font-semibold text-gray-200">Hour of Day Activity</h3>
+                <span class="data-source-badge">from stats-cache.json</span>
+            </div>
+            <p class="text-xs text-gray-500 mb-4">Authoritative session counts by hour</p>
+            <canvas id="authHourlyChart"></canvas>
         </div>
         <div class="card p-6">
             <h3 class="text-lg font-semibold mb-2 text-gray-200">Weekday Pattern</h3>
@@ -266,24 +354,47 @@
     </div>
 
     <!-- Projects Grid -->
-    <h2 class="text-2xl font-bold mb-4 text-white">Projects ({{NUM_PROJECTS}})</h2>
+    <h2 class="section-title">Projects ({{NUM_PROJECTS}})</h2>
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8" id="projectsContainer"></div>
 
     <!-- GitHub Repos -->
-    <h2 class="text-2xl font-bold mb-4 text-white">GitHub Repositories</h2>
+    <h2 class="section-title">GitHub Repositories</h2>
     <div class="card p-6 mb-8">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="githubReposContainer"></div>
     </div>
 
     <!-- Feature Usage -->
-    <h2 class="text-2xl font-bold mb-4 text-white">Feature Usage Statistics</h2>
+    <h2 class="section-title">Feature Usage Statistics</h2>
     <div class="card p-6 mb-8">
         <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4" id="tipsContainer"></div>
     </div>
 
+    <!-- Data Sources Footer -->
+    <div class="card p-6 mb-8">
+        <h3 class="text-lg font-semibold mb-4 text-gray-200">Data Sources</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div class="p-3 bg-gray-800 rounded-lg">
+                <div class="text-green-400 font-semibold">~/.claude.json</div>
+                <div class="text-gray-500">User info, project costs, feature usage</div>
+            </div>
+            <div class="p-3 bg-gray-800 rounded-lg">
+                <div class="text-blue-400 font-semibold">stats-cache.json</div>
+                <div class="text-gray-500">Authoritative session counts, hour activity</div>
+            </div>
+            <div class="p-3 bg-gray-800 rounded-lg">
+                <div class="text-purple-400 font-semibold">history.jsonl</div>
+                <div class="text-gray-500">Command history, slash commands</div>
+            </div>
+            <div class="p-3 bg-gray-800 rounded-lg">
+                <div class="text-orange-400 font-semibold">projects/*.jsonl</div>
+                <div class="text-gray-500">Session transcripts, tool usage</div>
+            </div>
+        </div>
+    </div>
+
     <footer class="mt-8 pt-4 border-t border-gray-700 text-center text-gray-500 text-sm">
         <p>Dashboard generated on {{TIMESTAMP}}</p>
-        <p class="mt-1">Source: <code class="bg-gray-800 px-2 py-1 rounded">~/.claude.json</code> (read-only)</p>
+        <p class="mt-1">Comprehensive Edition - All data sources consolidated</p>
     </footer>
 
 <script>
@@ -291,7 +402,7 @@
     const projectsData = {{PROJECTS_DATA}};
     const githubRepos = {{GITHUB_REPOS}};
     const modelUsage = {{MODEL_USAGE}};
-    
+
     // Historical data
     const dailyStats = {{DAILY_STATS}};
     const sessionLengths = {{SESSION_LENGTHS}};
@@ -299,6 +410,14 @@
     const weekdayRolling = {{WEEKDAY_ROLLING}};
     const modelOverTime = {{MODEL_OVER_TIME}};
     const projectComparison = {{PROJECT_COMPARISON}};
+
+    // New comprehensive data
+    const toolUsage = {{TOOL_USAGE}};
+    const slashCommands = {{SLASH_COMMANDS}};
+    const authHourCounts = {{AUTH_HOUR_COUNTS}};
+    const longestSession = {{LONGEST_SESSION}};
+    const commandHistory = {{COMMAND_HISTORY}};
+    const sessionBreakdown = {{SESSION_BREAKDOWN}};
 
     // Render project cards
     const projectsContainer = document.getElementById('projectsContainer');
@@ -309,7 +428,7 @@
             card.className = 'card p-5';
             const costColor = project.cost > 1 ? 'text-red-400' : project.cost > 0.1 ? 'text-yellow-400' : 'text-green-400';
             const trustBadge = project.trusted ? '<span class="badge badge-green text-xs">Trusted</span>' : '';
-            
+
             let modelBreakdown = '';
             if (project.modelUsage && Object.keys(project.modelUsage).length > 0) {
                 modelBreakdown = '<div class="mt-3 pt-3 border-t border-gray-600"><div class="text-xs text-gray-500 mb-2">Model Breakdown:</div>';
@@ -320,7 +439,7 @@
                 });
                 modelBreakdown += '</div>';
             }
-            
+
             card.innerHTML = `
                 <div class="flex justify-between items-start mb-3">
                     <h3 class="font-semibold text-white text-lg">${project.name}</h3>
@@ -411,6 +530,79 @@
         }
     });
 
+    // Session Breakdown Chart
+    new Chart(document.getElementById('sessionBreakdownChart').getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Main Sessions', 'Agent Sessions'],
+            datasets: [{
+                data: [sessionBreakdown.main || 0, sessionBreakdown.agent || 0],
+                backgroundColor: ['rgba(74, 222, 128, 0.7)', 'rgba(168, 85, 247, 0.7)'],
+                borderColor: ['#4ade80', '#a855f7'],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom', labels: { color: '#94a3b8' } },
+                tooltip: { callbacks: { label: ctx => ctx.label + ': ' + ctx.raw } }
+            }
+        }
+    });
+
+    // Tool Usage Chart
+    if (toolUsage.length > 0) {
+        new Chart(document.getElementById('toolUsageChart').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: toolUsage.map(t => t.name),
+                datasets: [{
+                    label: 'Usage Count',
+                    data: toolUsage.map(t => t.count),
+                    backgroundColor: 'rgba(96, 165, 250, 0.6)',
+                    borderColor: 'rgba(96, 165, 250, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                indexAxis: 'y',
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
+                    y: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    // Slash Commands Chart
+    if (slashCommands.length > 0) {
+        new Chart(document.getElementById('slashCommandsChart').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: slashCommands.map(c => c.name),
+                datasets: [{
+                    label: 'Times Used',
+                    data: slashCommands.map(c => c.count),
+                    backgroundColor: 'rgba(168, 85, 247, 0.6)',
+                    borderColor: 'rgba(168, 85, 247, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                indexAxis: 'y',
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
+                    y: { ticks: { color: '#94a3b8' }, grid: { display: false } }
+                }
+            }
+        });
+    }
+
     // Project Cost Chart
     const projectCosts = Object.entries(projectsData).filter(([_, p]) => p.cost > 0).sort((a, b) => b[1].cost - a[1].cost).slice(0, 8);
     new Chart(document.getElementById('projectCostChart').getContext('2d'), {
@@ -465,8 +657,8 @@
     }
 
     // === HISTORICAL CHARTS ===
-    
-    // 1. Daily Activity Trend
+
+    // Daily Activity Trend
     if (dailyStats.length > 0) {
         new Chart(document.getElementById('dailyActivityChart').getContext('2d'), {
             type: 'line',
@@ -483,8 +675,8 @@
                         yAxisID: 'y'
                     },
                     {
-                        label: 'Sessions',
-                        data: dailyStats.map(d => d.sessions),
+                        label: 'Main Sessions',
+                        data: dailyStats.map(d => d.mainSessions || 0),
                         borderColor: '#4ade80',
                         backgroundColor: 'rgba(74, 222, 128, 0.1)',
                         fill: false,
@@ -492,13 +684,13 @@
                         yAxisID: 'y1'
                     },
                     {
-                        label: 'Tool Calls',
-                        data: dailyStats.map(d => d.toolCalls),
+                        label: 'Agent Sessions',
+                        data: dailyStats.map(d => d.agentSessions || 0),
                         borderColor: '#a855f7',
                         backgroundColor: 'rgba(168, 85, 247, 0.1)',
                         fill: false,
                         tension: 0.3,
-                        yAxisID: 'y'
+                        yAxisID: 'y1'
                     }
                 ]
             },
@@ -508,14 +700,14 @@
                 plugins: { legend: { labels: { color: '#94a3b8' } } },
                 scales: {
                     x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
-                    y: { type: 'linear', position: 'left', ticks: { color: '#94a3b8' }, grid: { color: '#334155' }, title: { display: true, text: 'Messages / Tools', color: '#94a3b8' } },
+                    y: { type: 'linear', position: 'left', ticks: { color: '#94a3b8' }, grid: { color: '#334155' }, title: { display: true, text: 'Messages', color: '#94a3b8' } },
                     y1: { type: 'linear', position: 'right', ticks: { color: '#94a3b8' }, grid: { display: false }, title: { display: true, text: 'Sessions', color: '#94a3b8' } }
                 }
             }
         });
     }
 
-    // 2. Session Length Distribution
+    // Session Length Distribution
     if (sessionLengths.length > 0) {
         new Chart(document.getElementById('sessionLengthChart').getContext('2d'), {
             type: 'bar',
@@ -547,7 +739,7 @@
         });
     }
 
-    // 3. Model Usage Over Time (Stacked Area)
+    // Model Usage Over Time
     if (modelOverTime.length > 0) {
         new Chart(document.getElementById('modelOverTimeChart').getContext('2d'), {
             type: 'line',
@@ -591,7 +783,7 @@
         });
     }
 
-    // 4. Project Comparison (Horizontal Bar)
+    // Project Comparison
     if (projectComparison.length > 0) {
         new Chart(document.getElementById('projectComparisonChart').getContext('2d'), {
             type: 'bar',
@@ -617,20 +809,20 @@
         });
     }
 
-    // 5. Hourly Rolling Average
-    if (hourlyRolling.length > 0) {
-        const latestHourly = hourlyRolling[hourlyRolling.length - 1];
+    // Authoritative Hourly Activity (from stats-cache.json)
+    if (Object.keys(authHourCounts).length > 0) {
         const hours = Array.from({length: 24}, (_, i) => i);
-        new Chart(document.getElementById('hourlyRollingChart').getContext('2d'), {
+        new Chart(document.getElementById('authHourlyChart').getContext('2d'), {
             type: 'bar',
             data: {
                 labels: hours.map(h => h.toString().padStart(2, '0') + ':00'),
                 datasets: [{
-                    label: 'Avg Sessions',
-                    data: hours.map(h => latestHourly.hours[h] || 0),
+                    label: 'Sessions',
+                    data: hours.map(h => authHourCounts[h.toString()] || 0),
                     backgroundColor: hours.map(h => {
-                        const val = latestHourly.hours[h] || 0;
-                        const intensity = Math.min(1, val / 3);
+                        const val = authHourCounts[h.toString()] || 0;
+                        const maxVal = Math.max(...Object.values(authHourCounts));
+                        const intensity = maxVal > 0 ? val / maxVal : 0;
                         return `rgba(96, 165, 250, ${0.3 + intensity * 0.7})`;
                     }),
                     borderWidth: 0
@@ -647,18 +839,18 @@
         });
     }
 
-    // 6. Weekday Rolling Average
+    // Weekday Rolling Average
     if (weekdayRolling.length > 0) {
         const latestWeekday = weekdayRolling[weekdayRolling.length - 1];
         const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
         const weekdayColors = [
-            'rgba(96, 165, 250, 0.7)',  // Mon
-            'rgba(74, 222, 128, 0.7)',  // Tue
-            'rgba(168, 85, 247, 0.7)',  // Wed
-            'rgba(251, 146, 60, 0.7)',  // Thu
-            'rgba(248, 113, 113, 0.7)', // Fri
-            'rgba(251, 191, 36, 0.7)',  // Sat
-            'rgba(236, 72, 153, 0.7)'   // Sun
+            'rgba(96, 165, 250, 0.7)',
+            'rgba(74, 222, 128, 0.7)',
+            'rgba(168, 85, 247, 0.7)',
+            'rgba(251, 146, 60, 0.7)',
+            'rgba(248, 113, 113, 0.7)',
+            'rgba(251, 191, 36, 0.7)',
+            'rgba(236, 72, 153, 0.7)'
         ];
         new Chart(document.getElementById('weekdayRollingChart').getContext('2d'), {
             type: 'bar',

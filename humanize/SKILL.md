@@ -9,122 +9,220 @@ Make AI-generated content read like it was written by a human through targeted, 
 
 **Why?** AI-written text has telltale patterns—formulaic transitions, passive voice, overly balanced sentences—that make it feel mechanical. This skill fixes those patterns without rewriting the whole document.
 
+**Model Coverage:** Tested on Opus 4.5, Sonnet 4, Haiku. See **[TESTING.md](./TESTING.md)** for details.
+
 ## Quick Start
 
-1. Read the file → 2. Identify AI patterns → 3. Make targeted edits → 4. Verify variety
+1. `wc -w FILE` (baseline) → 2. Scan for patterns → 3. Make 10-20 targeted edits → 4. Verify ±20 words & 0 em-dashes → 5. Check burstiness
+
+**Supporting Files:** [REFERENCE.md](./REFERENCE.md) (pattern tables) | [TESTING.md](./TESTING.md) (evaluation scenarios)
+
+## Content Integrity Rules (CRITICAL)
+
+> [!CRITICAL]
+> **The Cardinal Rule: Transform style, never fabricate content.**
+>
+> Humanization edits HOW something is expressed, not WHAT is expressed. Every technique must work only with material already present in the source text.
+
+### Allowed (Style Transformation)
+- Restructure sentences (change order, split, combine)
+- Replace words with synonyms that preserve meaning
+- Change punctuation and sentence boundaries
+- Add/remove contractions (domain-appropriate)
+- Convert passive to active voice
+- Vary sentence lengths by restructuring existing content
+- Add hedging to soften existing claims ("X is true" → "X appears to be true")
+- Convert existing lists to prose or vice versa
+
+### Forbidden (Content Fabrication)
+- Invent personal anecdotes, opinions, or experiences not in source
+- Add fake citations, names, dates, or statistics
+- Create metaphors that introduce claims not in the original
+- Insert "I've seen...", "In my experience..." unless source has them
+- Make up specific details to replace vague ones
+- Add editorial commentary ("surprisingly", "disappointingly") unless source expresses that sentiment
+
+### The Source Material Test
+Before any edit, ask: **"Is this information already in the source text?"**
+- If YES → transform freely
+- If NO → do not add it
 
 ## How It Works
 
 ### Step 1: Read and Scan for AI Patterns
 
-Read the target file and identify these common AI-writing tells:
+Read the target file and identify common AI-writing tells. **Priority patterns to scan first:**
 
-| Pattern Type | Examples | Why It Sounds AI |
-|--------------|----------|------------------|
-| **"By [gerund]" overuse** | **"By implementing...", "By constructing...", "By training..."** | **Creates monotonous explanatory rhythm. SCAN FOR THIS FIRST—it appears in nearly every paragraph of technical AI writing.** |
-| Formulaic transitions | "Furthermore,", "Additionally,", "Moreover," (Note: "However" is fine in moderation) | Too consistent, textbook-like |
-| "This [verb] that" | "This suggests that...", "This demonstrates that...", "This indicates that..." | Most common AI fingerprint |
-| **Em-dashes** | "The result—faster inference—was surprising" | Humans rarely use em-dashes; AI overuses them |
-| **Fragment + colon** | "The result:", "The takeaway:", "What's needed:", "The implication:" | Humans write complete sentences in prose, not headline fragments |
-| Noun-heavy subjects | "The deployment of...", "The integration of...", "The introduction of..." | Passive, distancing |
-| Passive constructions | "has been shown to", "is being developed", "was demonstrated" | Avoids direct statements |
-| Balanced sentences | Every paragraph: claim → evidence → implication; semicolon-connected clauses | Mechanical rhythm |
-| Framework redundancy (on repeat use) | "The BioDisco framework" after already introduced | Redundant when name is already established |
-| Opening formulas | "In the realm of...", "In the domain of...", "A systematic evaluation..." | Pompous, detached |
-| Result phrasing | "achieves X% improvement on Y benchmark", "achieving state-of-the-art" | Always same structure |
-| Excessive bolding | Every technical term **bolded** | Over-emphasizes everything |
+1. **"By [gerund]"** — "By implementing...", "By training..."
+2. **"That [noun]" connectors** — "That shift...", "That vulnerability..." (linking sentences)
+3. **Indirect speech** — "The field is shifting...", "Research suggests...", "A study identifies..."
+4. **Em-dashes (—)** — Humans rarely use them; AI overuses them
+5. **"This [verb] that"** — "This suggests that...", "This demonstrates that..."
+6. **Subordinate smoothness** — "while maintaining X", "thereby reducing Y" (too-smooth connectors)
+7. **Framework intro pattern** — "The [X] framework mitigates/addresses..." (robotic combo)
+8. **High-risk phrases** — "framework provides" (7x), "maintaining high" (6.4x), "eliminating the need" (5.4x)
+9. **"For X, Y does Z"** — "For real-time applications, X optimizes..." (formal opener)
+10. **Colon definition splits** — "X decouples A from B: it maintains..." (explanatory colons)
+11. **Too-simple declaratives** — Short, direct sentences can also trigger "robotic formality"
+
+See **[REFERENCE.md](./REFERENCE.md#ai-pattern-detection-table)** for the complete pattern detection table.
 
 ### Step 2: Apply Targeted Edits
 
 Make 10-20 edits across the document. Do NOT rewrite entire sections.
 
-> [!IMPORTANT]
-> **Preserve word count.** The goal is to make text sound human, not to shorten it. If the original paragraph is 150 words, your edited version should be ~140-160 words. Avoid compounding conciseness across multiple passes—repeated humanization should NOT shrink the document.
->
-> **How to preserve word count while removing patterns:** Don't pad with filler words (like "meaningfully", "smartly", "actively"). Instead: (1) Restructure sentences to use natural alternatives that maintain length, (2) Expand existing explanations rather than condensing them, (3) Rearrange clause order to achieve length naturally. Example: "By analyzing discourse" (4 words) → "When analyzing discourse" (4 words) preserves both pattern change AND length without padding.
-
 ### Step 2b: Word Count Verification (MANDATORY)
 
 > [!CRITICAL]
-> **ZERO NET CHANGE RULE:** Document word count must remain within ±5% of the *original* (not previous iteration). If you've reduced word count by more than 5%, you are **condensing**, not **restructuring**. Stop and add content back.
+> **THE ±20 WORD RULE:** Final word count must be within **±20 words** of the original. Always measure against the ORIGINAL document, not previous iterations.
 >
-> **Why?** In multi-pass or multi-iteration contexts, even small reductions compound: -5% per pass = 59% remaining after 5 passes.
+> AI models inherently summarize. You must fight this bias by restructuring, not condensing.
 
-**Before submitting your work:**
+**Workflow:**
+1. **Measure:** `wc -w PATH` before editing
+2. **Edit:** Apply targeted changes
+3. **Verify:** `wc -w PATH` after editing
+4. **If > 20 word change:** STOP. Revert and restructure instead of cutting/padding
 
-1. Count original document word count
-2. Count edited document word count
-3. Calculate percentage change: ((New - Original) / Original) × 100
-4. If **> -5%**: STOP. You condensed. Restructure instead—expand explanations, add supporting detail, rephrase to recover length without padding.
+**How to preserve word count:**
+- Restructure sentences: "By analyzing X" → "When analyzing X" (same length)
+- Expand expressions: "X happens" → "X happens because Y, which means Z"
+- Never pad with filler ("meaningfully", "smartly", "actively")
 
-**Section-by-section tracking (for longer documents):**
-- For each section edited, note: `[Section name] - Original: X words → Edited: Y words (Z% change)`
-- Flag any section with >5% reduction for restructuring, not condensing
+### Step 2c: Em-Dash Count Verification (MANDATORY)
 
-### Condensing vs. Restructuring: The Critical Distinction
+> [!CRITICAL]
+> **NO NEW EM-DASHES:** Em-dash count must NOT increase. Target: 0.
 
-This is the most common failure mode. Understand the difference:
+**Verify:** `grep -o '—' PATH | wc -l` (before and after)
 
-| Condensing (❌ DO NOT DO) | Restructuring (✅ DO THIS) |
-|---|---|
-| "Long sentence with pattern" → "Short sentence" | "Long sentence with pattern" → "Reworded long sentence without pattern" |
-| Removes words to improve flow | Keeps words but changes their arrangement and rhythm |
-| Results in net loss of content | Preserves all content, just reorganized |
-| Example: "An agentic framework for processor design utilizes LLMs to break down complex hardware descriptions" → "Agents decompose chip designs" | Example: "An agentic framework for processor design breaks down complex hardware descriptions, generates HDL, and verifies it with engineer review" (same length, different pattern) |
+**If em-dashes increased, replace with:** periods, commas, colons, or parentheses.
 
-**When you're tempted to condense, instead:**
-1. Expand the explanation: "X happens" → "X happens because Y, which means Z"
-2. Add supporting detail: "The system works" → "The system works by using A and B approaches, both of which..."
-3. Rephrase with more words: "Transparency doesn't build trust" → "Transparency alone, without cognitive alignment, doesn't build the kind of trust that humans need"
-4. Break into multiple sentences: "Long clause, long clause" → "Long clause. New sentence with second clause."
+### Step 2d: Anti-Detection (Burstiness & Perplexity)
 
-**Multi-Pass Approach:** For longer documents (2000+ words), use multiple passes with focused attention:
-- **Pass 1:** Scan for high-frequency patterns—especially "By [gerund]", formulaic transitions, "This [verb] that"
-- **Pass 2:** Fix sentence rhythm and variety—ensure paragraphs don't start the same way, vary sentence lengths
-- **Pass 3:** Verify consistency—check that no new patterns were created and that edits feel natural
-- **Pass 4 (MANDATORY):** Word count check. If total word count dropped >5% from original, stop and restructure passages back to original length.
+AI detectors measure statistical uniformity. Disrupt rhythm and predictability using **only existing content**.
 
-**Transition Replacements:**
+**1. Burstiness (Sentence Length Variation):**
 
-| AI Pattern | Human Alternatives |
-|------------|-------------------|
-| "However, ..." (overused) | Keep some! Vary with "That said,", "The catch is that", "The trade-off is" |
-| "Furthermore, ..." | "Also,", "And", "Plus,", or just start new sentence |
-| "Additionally, ..." | "On top of that,", remove and restructure |
-| "This suggests that..." | "which suggests", "The implication is that...", "...suggesting that" |
-| "This demonstrates..." | "showing", "...which demonstrates", or just state the conclusion |
-| "By [gerund]..." | "Through X,", "Using Y,", "When [verb]", restructure to lead with outcome instead, or change passive to active voice |
-| "In the realm of..." | "For...", "In...", or just name the domain directly |
-| "Simultaneously, ..." | "Meanwhile,", "At the same time,", "In parallel," |
-| "The [X] framework..." (repeat) | Just "X" after first introduction |
-| "achieves X% on Y" | "a X% jump on Y", "X% better than", "achieving X%", move metric position |
+> [!CRITICAL]
+> AI maintains uniform 12-18 word sentences. Human writing has HIGH variance. This is the #1 detection signal.
+
+Target per 10 sentences: 2-3 very short (2-6 words), 2-3 very long (25-40 words), 4-5 medium. See **[REFERENCE.md](./REFERENCE.md#burstiness-targets)**.
+
+**Techniques:**
+- Split: "The model processes data and outputs results" → "The model processes data. Then it outputs results."
+- Combine: "X works. Y helps." → "X works, and when combined with Y, it improves significantly."
+
+**2. Vocabulary Entropy:**
+
+Replace 3-5 "AI-typical" words per paragraph with rarer synonyms that preserve meaning exactly. See **[REFERENCE.md](./REFERENCE.md#vocabulary-alternatives)**.
 
 > [!CAUTION]
-> **Avoid colon-fragment replacements.** Patterns like "The result:", "The implication:", "What's needed:" are themselves AI tells. Humans write complete sentences:
-> - ❌ "The implication: current methods fail" 
-> - ✅ "The implication is that current methods fail"
-> - ✅ "...which implies that current methods fail"
+> Synonym must have EXACT same meaning. If unsure, keep the original.
 
-**Sentence Structure Fixes:**
+**3. Visual Structure:** Vary paragraph shapes (dense → bullets, short paragraphs → merged).
 
-- Break long compound sentences into two sentences, or use colons (:) sparingly
-- **NEVER use em-dashes (—)**: Humans rarely use them; they're a major AI tell. Use periods, commas, colons, or parentheses instead. This is a hard constraint—every em-dash must be removed or replaced.
-- Add occasional questions for **topic transitions only**: "So what changed?" / "Why the structural formalism?" (NOT mid-paragraph rhetorical pauses like "What does this imply?" which are AI tells)
-- Use "you" when explaining: "This lets you..."
-- Vary sentence length dramatically: 5-word sentences next to 40-word ones
-- Use active verbs for researchers: "Researchers found" not "Research uncovers"
+### Step 2e: Lexical Diversity
 
-**Tone Adjustments:**
+AI text has measurably lower vocabulary diversity. Fix by varying word choice **using only synonyms that preserve meaning**.
 
-- Replace "It is worth noting that" → just state the thing
-- Replace "It should be noted" → cut entirely or use "Note:"
-- Add conversational asides: "Think of it as...", "The key insight:", "Here's the telling detail:"
-- Avoid contractions in academic/formal writing—they sound conversational, not scholarly. Reserve casual tone for blog posts or newsletters only.
-- Add occasional first-person: "we see here", "what this tells us"
-- Include rare hedging: "appears to", "seems to suggest" (humans hedge differently than AI)
-- Use occasional metacommentary: "This is worth understanding, but the core idea is simple:"
+**1. Connector Audit:** Each connector should appear **max 2 times per 1000 words**. If more, replace 50% or restructure. See **[REFERENCE.md](./REFERENCE.md#connector-replacements)**.
 
-### Step 3: Vary Your Edits
+**2. Verb Repetition:** If any verb appears 3+ times in 500 words, vary it. See **[REFERENCE.md](./REFERENCE.md#verb-repetition-alternatives)**.
+
+**3. Noun Phrase Variation:** After first reference, vary: "The transformer" → "this approach" → "it"
+
+> [!CAUTION]
+> Never change meaning. Only vary when semantically equivalent.
+
+### Step 2f: Punctuation Diversity
+
+Humans use more varied punctuation than AI. Increase variety by restructuring. See **[REFERENCE.md](./REFERENCE.md#punctuation-targets)** for targets.
+
+**Techniques:**
+- **Questions:** "The implications are significant" → "What are the implications? They're significant."
+- **Semicolons:** "X is fast. Y is slow." → "X is fast; Y is slow."
+- **Parentheses:** "The approach, which is unconventional, works." → "The approach (unconventional as it is) works."
+
+> [!CAUTION]
+> Questions must not imply answers not in the source.
+
+### Condensing vs. Restructuring
+
+> [!CRITICAL]
+> **Most common failure mode.** Condensing removes words; restructuring rearranges them.
+
+| Condensing (❌) | Restructuring (✅) |
+|---|---|
+| "Long sentence" → "Short sentence" | "Long sentence" → "Reworded long sentence" |
+| Removes words | Changes arrangement |
+| Net content loss | Same content, different pattern |
+
+**When tempted to condense:** Expand expressions, add supporting detail, or break into multiple sentences.
+
+**Multi-Pass for Long Documents (2000+ words):**
+1. Scan high-frequency patterns
+2. Fix sentence rhythm
+3. Verify no new patterns created
+4. Word count check (MANDATORY)
+
+**Transition Replacements:** See **[REFERENCE.md](./REFERENCE.md#transition-replacements)**.
+
+**Key Rules:**
+- Never use em-dashes. Replace with periods, commas, colons, or parentheses
+- Questions only for topic transitions, not rhetorical pauses
+- Keep formal register in academic writing (no contractions)
+- Remove filler: "It is worth noting that" → just state the thing
+
+### Step 3: Add Human Personality
+
+> [!IMPORTANT]
+> **Removing AI patterns is not enough.** Detectors also flag text that lacks "rhetorical flourishes" and feels "impersonal." You must ADD human touches using only existing content.
+
+**Inject Personality (without fabricating):**
+- **Mild surprise:** "Interestingly," or "Curiously," before a finding (if the finding IS interesting)
+- **Conversational asides:** "—and this matters—" or "(worth noting)"
+- **Direct address:** "Here's the thing:" or "Notice that..."
+- **Occasional informality:** "pretty effective" instead of "effective", "a lot" instead of "significantly"
+- **Opinion hedging:** "seems to", "appears to" (humans hedge more than AI)
+
+**Disrupt S-V-O Order:**
+- Invert occasionally: "Effective, this approach was not." → only when natural
+- Lead with result: "A 10% gain—that's what the model achieved."
+- Fronted adverbials: "In practice, the system fails." instead of "The system fails in practice."
+
+**Break Impersonal Tone:**
+- Replace "The field is shifting" → "Researchers are shifting the field" (add human actors)
+- Replace "Research suggests" → "Three recent papers suggest" (specificity)
+- Replace "The implication is clear" → "What does this mean? It means..." (question form)
+
+**Vary Grammar (Break "Correct but Unvaried"):**
+- Avoid repeating sentence structures: if three sentences use "X [verb]s Y", restructure one
+- Break parallel semicolon lists: "A does X; B does Y; C does Z" → "A does X. Meanwhile, B does Y. And C? It does Z."
+- Use sentence fragments occasionally: "The result? Better accuracy."
+- Try rhetorical inversion: "Effective, this was not." (sparingly)
+- Interrupt with asides: "The model—surprisingly—failed at basic counting."
+- Break colon splits: "X decouples A from B: it maintains..." → "X separates A and B. This lets it..."
+
+**Fix "Too Simple = Robotic":**
+- Very short declaratives trigger detection too: "The focus is on X." feels robotic
+- Add texture: "The focus? X." or "What's the focus here? X."
+- Combine with adjacent sentence to add flow
+- Or add mild opinion: "The focus, rightly, is on X."
+
+**Fix Indirect Speech (Still Heavily Flagged):**
+- "A study identifies..." → "Smith et al. found...", "Recent work shows...", or just state the finding
+- "A protocol called X becomes necessary" → "You need X" or "X becomes essential"
+- "Research suggests..." → Name the researchers or say "Three papers this week show..."
+- Add human actors: "The field is shifting" → "Researchers are rethinking..."
+
+**Humanize Headings (if editing full documents):**
+- Overly clean headings trigger detection ("Multimodal Grounding and Internal Mechanics")
+- Add slight informality: "How Models Actually See" instead of "Visual Processing Mechanisms"
+- Use questions: "Why Do Models Fail at Counting?" instead of "Enumeration Failures"
+- Keep some formal, vary others—consistency in heading style is itself a tell
+
+### Step 4: Vary Your Edits
 
 > [!CAUTION]
 > Don't create new patterns. If you replace every "However" with "But", that's just a different pattern. Mix it up:
@@ -133,15 +231,34 @@ This is the most common failure mode. Understand the difference:
 > - Some "However" → merge with previous sentence using ", but"
 > - Some "However" → leave as-is
 
-### Step 4: Check for Balance
+### Step 5: Final Verification Checklist
 
-After editing, scan the document:
-- [ ] **Word count within ±5% of original** (CRITICAL—check this FIRST)
-- [ ] No more than 2 consecutive paragraphs start the same way
-- [ ] Mix of sentence lengths (short punchy + longer flowing)
-- [ ] At least some contractions or informal touches
-- [ ] Technical terms bolded sparingly, not exhaustively
-- [ ] All citations and section structure preserved
+> [!IMPORTANT]
+> Complete ALL checks before submitting. For detailed validation scenarios, see **[TESTING.md](./TESTING.md)**.
+
+**Content Integrity (DO FIRST):**
+- [ ] No anecdotes/experiences fabricated
+- [ ] No citations/statistics invented
+- [ ] All synonyms preserve exact meaning
+
+**Quantitative (MANDATORY):**
+- [ ] Word count within ±20 words of original
+- [ ] Em-dash count ≤ original (target: 0)
+- [ ] Connectors ≤ 2 per 1000 words each
+- [ ] Sentence length varies (<6 and >25 word sentences present)
+
+**Style:**
+- [ ] No 2+ consecutive paragraphs start same way
+- [ ] Technical terms and citations preserved
+- [ ] Contractions match domain register
+
+**Quick Validation:**
+```bash
+wc -w FILE                    # Word count
+grep -o '—' FILE | wc -l      # Em-dashes (target: 0)
+```
+
+**Final Test:** Does the edited version claim anything the original didn't? If yes, revert.
 
 ## Examples
 
@@ -184,58 +301,47 @@ After editing, scan the document:
 
 ## Quality Guidelines
 
-- **Preserve meaning**: Edits should change tone, not content
+- **Preserve meaning**: Edits change tone, not content
 - **Stay subtle**: 10-20 targeted edits, not a full rewrite
-- **Maintain expertise**: The text should still sound knowledgeable, just not robotic
-- **Match context**: Different domains require different humanization intensity. Humanization removes AI patterns but shouldn't change the register of the original text.
-- **Don't over-correct**: Formal language is fine—"However" is normal in written prose, "But" is too casual. The problem is *overuse* and *uniformity*, not formality itself
-- **Respect register**: Written communication isn't WhatsApp. Keep appropriate formality while adding variety
-- **First-reference rule**: Keep context on first mention ("A new framework called X", "The Y architecture"). Only drop descriptive nouns on subsequent references after the term is established
-- **Preserve introductions**: When something is NEW to the reader, "A new method called X demonstrates..." is human; stripping to just "X demonstrates..." loses necessary context
+- **Maintain expertise**: Knowledgeable but not robotic
+- **Don't over-correct**: The problem is *overuse* and *uniformity*, not formality itself
+- **First-reference rule**: Keep context on first mention; only shorten after established
 
-### Domain-Specific Calibration
+**Domain-Specific Calibration:** See **[REFERENCE.md](./REFERENCE.md#domain-specific-calibration)**.
 
-The intensity of humanization varies by context. The goal is always the same—remove AI patterns—but not to change the inherent formality of the domain:
-
-| Domain | Edit Count | Focus Areas | Don't Do |
-|--------|-----------|------------|----------|
-| Academic/Research papers | 8-12 edits | "By [gerund]" → "When/Through", transition variety, sentence rhythm | Add asides or colloquialisms; use contractions |
-| Technical documentation | 6-10 edits | Remove "By [gerund]", fix passive voice, clarify with active verbs | Use conversational tone; lose precision |
-| Blog posts | 15-20 edits | All patterns, add personality, can include conversational asides | Sacrifice clarity for style |
-| Newsletters | 12-18 edits | Pattern removal plus selective personality additions | Sound unprofessional or lose authority |
-
-**Key principle:** Humanization means removing AI *patterns*, not reducing *formality*. An academic paper should remain academic after humanization.
-
-**Critical reminder (applies to ALL domains):** Word count preservation is NOT negotiable. Whether the document is academic, technical, or narrative, maintain ±5% word count. Humanization that compresses content is not humanization—it's summarization. This rule has no exceptions.
-
-### Academic/Research-Specific Warnings
-
-When humanizing technical or academic writing, watch for these pitfalls:
-
-- **Avoid padding to maintain word count.** Don't add hollow adverbs like "meaningfully", "smartly", "actively", or "consistently" just to preserve length. Instead, restructure sentences or expand genuine explanations.
-- **Don't sacrifice technical precision for flow.** Keep technical terminology, proper capitalization of systems/frameworks, and specific notation intact. Humanization should not simplify content.
-- **Maintain section structure.** Don't alter headings, subheadings, or the hierarchical organization of the paper. Humanization applies to prose only.
-- **Watch for pattern substitution.** Removing "By [gerund]" is good; replacing it consistently with "Through X" or "When [verb]" creates a new pattern. Vary your replacements.
-- **Keep citations intact.** Do not simplify or paraphrase citations; they must remain exact references to the original work.
+**Academic/Research Warnings:**
+- Never pad with hollow adverbs ("meaningfully", "smartly")
+- Keep technical terminology, section structure, and citations intact
+- Vary your pattern replacements (don't swap all "By [gerund]" with "When [verb]")
 
 ## Troubleshooting
 
 | Problem | Solution |
 |---------|----------|
-| **Word count dropped >5%** | **STOP. You condensed, not restructured.** Revert changes and instead: expand explanations, add supporting detail, break long sentences into multiple sentences (don't remove words). Aim for same word count, different pattern. |
-| Text now sounds too casual | Scale back conversational asides and colloquialisms; keep more original phrasing |
-| Created new repetitive pattern | Vary your replacements; use different fixes for same issue |
-| Lost technical precision | Restore specific terms; only simplify explanatory phrases |
-| Edits feel disconnected | Read surrounding sentences; match the local rhythm |
-| All paragraphs still start same way | Vary openers: some with results, some with questions, some with fragments |
-| Too many short punchy sentences | Add a few longer, flowing sentences back for rhythm variety—this also helps recover word count |
-| Metrics feel buried | Sometimes lead with the number: "23% fewer tokens—that's what ASAP achieves" |
-| Compounding word loss across iterations | Always measure against ORIGINAL document, not previous iteration. Each pass must stay within ±5% of original baseline. |
+| **Word count changed >20 words** | STOP. Revert. Restructure instead of cutting/padding. |
+| **Em-dash count increased** | STOP. Replace new em-dashes with periods, commas, colons, or parentheses. |
+| **Still detected as AI (98%+)** | Increase burstiness aggressively; add more punctuation variety; vary vocabulary more. |
+| **Fabricated content** | Revert. Review Content Integrity Rules. Only transform what exists. |
+| Text too casual | Scale back conversational asides; keep original phrasing. |
+| New repetitive pattern | Vary replacements; use different fixes for same issue. |
+| Compounding issues | Always measure against ORIGINAL document, not previous iteration. |
 
-## Cross-Article Consistency Check
+## Edge Cases
 
-When editing multiple related articles, watch for:
-- Using the same replacement for a pattern across all articles (creates new uniformity)
-- Overusing any single conversational touch ("The key insight:" in every article)
-- Same sentence rhythm across articles (all conclusions as fragments, etc.)
-- Missing domain-appropriate variation (security articles can be more urgent than methodology papers)
+**Edge Case 1: Short Document (<200 words)**
+- Apply only 3-5 edits maximum
+- Focus on the most egregious patterns first
+- May not hit all burstiness targets; that's okay for short content
+
+**Edge Case 2: Technical Jargon-Heavy Text**
+- Do NOT replace domain-specific terms with synonyms
+- Focus on structure (transitions, sentence flow) rather than vocabulary
+- Example: "The LLM utilizes attention mechanisms" → keep "attention mechanisms" but change "utilizes" to "uses"
+
+**Edge Case 3: Already Human-Like Text**
+- If detector scores <70% AI, minimal changes needed
+- Focus only on obvious patterns (em-dashes, "By [gerund]")
+- Risk: over-editing good text makes it worse
+
+**Cross-Article Consistency:**
+When editing multiple articles, vary replacements across articles; don't use "The key insight:" in every one.

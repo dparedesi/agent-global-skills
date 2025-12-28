@@ -30,6 +30,10 @@ add_to_gitignore() {
         echo "# AI tool symlinks" > .gitignore
     fi
     if ! grep -q "^${entry}$" .gitignore 2>/dev/null; then
+        # Ensure file ends with newline before appending
+        if [ -s .gitignore ] && [ "$(tail -c1 .gitignore | wc -l)" -eq 0 ]; then
+            echo "" >> .gitignore
+        fi
         echo "$entry" >> .gitignore
         echo -e "${GREEN}✓${NC} Added '$entry' to .gitignore"
     else
