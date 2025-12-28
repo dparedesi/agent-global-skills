@@ -15,39 +15,39 @@ Generate visual HTML dashboards from Claude Code and Gemini usage data.
 
 ```bash
 # Step 1: Aggregate all session history (~/.claude/projects/)
-python3 ~/.agent/skills/llms-dashboard/scripts/aggregate_claude_history.py
+python3 ~/.claude/skills/llms-dashboard/scripts/aggregate_claude_history.py
 
 # Step 2: Generate dashboard
-python3 ~/.agent/skills/llms-dashboard/scripts/update_claude_dashboard.py
+python3 ~/.claude/skills/llms-dashboard/scripts/update_claude_dashboard.py
 
 # Step 3: Open in browser
-open ~/.agent/skills/llms-dashboard/claude_dashboard.html
+open ~/.claude/skills/llms-dashboard/claude_dashboard.html
 ```
 
 ### Gemini Dashboard
 
 ```bash
 # Step 1: Aggregate all session history (~/.gemini/tmp/)
-python3 ~/.agent/skills/llms-dashboard/scripts/aggregate_gemini_history.py
+python3 ~/.claude/skills/llms-dashboard/scripts/aggregate_gemini_history.py
 
 # Step 2: Generate dashboard
-python3 ~/.agent/skills/llms-dashboard/scripts/update_gemini_dashboard.py
+python3 ~/.claude/skills/llms-dashboard/scripts/update_gemini_dashboard.py
 
 # Step 3: Open in browser
-open ~/.agent/skills/llms-dashboard/gemini_dashboard.html
+open ~/.claude/skills/llms-dashboard/gemini_dashboard.html
 ```
 
 ### VS Code Dashboard
 
 ```bash
 # Step 1: Aggregate all session history (Logs, History, Storage)
-python3 ~/.agent/skills/llms-dashboard/scripts/aggregate_vscode_data.py
+python3 ~/.claude/skills/llms-dashboard/scripts/aggregate_vscode_data.py
 
 # Step 2: Generate dashboard
-python3 ~/.agent/skills/llms-dashboard/scripts/update_vscode_dashboard.py
+python3 ~/.claude/skills/llms-dashboard/scripts/update_vscode_dashboard.py
 
 # Step 3: Open in browser
-open ~/.agent/skills/llms-dashboard/vscode_dashboard.html
+open ~/.claude/skills/llms-dashboard/vscode_dashboard.html
 ```
 
 > [!NOTE]
@@ -135,12 +135,12 @@ ls ~/.claude.json          # Should exist for Claude dashboard
 ls ~/.gemini/tmp/          # Should exist for Gemini dashboard
 
 # 2. Run aggregate + update
-python3 ~/.agent/skills/llms-dashboard/scripts/aggregate_claude_history.py
-python3 ~/.agent/skills/llms-dashboard/scripts/update_claude_dashboard.py
+python3 ~/.claude/skills/llms-dashboard/scripts/aggregate_claude_history.py
+python3 ~/.claude/skills/llms-dashboard/scripts/update_claude_dashboard.py
 
 # 3. Verify output
-ls -la ~/.agent/skills/llms-dashboard/claude_dashboard.html  # Should be recent
-open ~/.agent/skills/llms-dashboard/claude_dashboard.html    # Should show charts
+ls -la ~/.claude/skills/llms-dashboard/claude_dashboard.html  # Should be recent
+open ~/.claude/skills/llms-dashboard/claude_dashboard.html    # Should show charts
 ```
 
 **Success indicators:**

@@ -17,7 +17,7 @@ Testing documentation for the Skill Index Updater.
 **Query:** "Update the skill index" or "Sync agents"
 
 **Expected behaviors:**
-- [ ] Runs `python3 .agent/skills/skill-index-updater/scripts/update_skill_index.py`
+- [ ] Runs `python3 .claude/skills/skills-index-updater/scripts/update_skill_index.py`
 - [ ] Verifies output shows all expected skills
 - [ ] Checks for any warnings during scan
 - [ ] Reports success with skill count
@@ -63,10 +63,10 @@ Testing documentation for the Skill Index Updater.
 
 ```bash
 # Dry run to preview changes
-python3 .agent/skills/skill-index-updater/scripts/update_skill_index.py --dry-run
+python3 .claude/skills/skills-index-updater/scripts/update_skill_index.py --dry-run
 
 # Count skills found
-python3 .agent/skills/skill-index-updater/scripts/update_skill_index.py 2>&1 | grep "Found"
+python3 .claude/skills/skills-index-updater/scripts/update_skill_index.py 2>&1 | grep "Found"
 
 # Verify AGENTS.md was updated
 git diff AGENTS.md

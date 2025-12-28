@@ -5,7 +5,7 @@ Claude History Aggregator
 Scans all session files in ~/.claude/projects/ and consolidates them
 into a single historical database for analysis.
 
-Output: ~/.agent/skills/llms-dashboard/data/claude_history.json
+Output: ~/.claude/skills/llms-dashboard/data/claude_history.json
 """
 
 import json

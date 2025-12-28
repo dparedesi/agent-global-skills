@@ -1,7 +1,10 @@
 #!/bin/bash
 
 # Skills Local Setup - Create symlinks for AI tools in the current repository
-# Usage: ./skills-local-setup.sh [gemini|claude|all]
+# Usage: ./skills-local-setup.sh [gemini|claude|agent|opencode|all]
+#
+# Source of truth: .claude/ directory
+# Symlinks: .agent/, .opencode/ -> .claude/ (compatibility)
 
 set -e
 
@@ -39,7 +42,7 @@ create_symlink() {
     local source="$1"
     local target="$2"
     local gitignore_entry="$3"
-    
+
     if [ -L "$target" ]; then
         echo -e "${YELLOW}ℹ${NC} Symlink already exists: $target -> $(readlink "$target")"
     elif [ -e "$target" ]; then
@@ -61,10 +64,10 @@ create_symlink() {
             echo -e "${RED}⚠  This file will be DELETED.${NC}"
         fi
         echo ""
-        
+
         read -p "Do you want to remove $target and create the symlink? [y/N] " -n 1 -r
         echo ""
-        
+
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             echo -e "🗑️  Removing $target..."
             rm -rf "$target"
@@ -79,7 +82,7 @@ create_symlink() {
         ln -s "$source" "$target"
         echo -e "${GREEN}✓${NC} Created: $target -> $source"
     fi
-    
+
     add_to_gitignore "$gitignore_entry"
 }
 
@@ -98,61 +101,114 @@ setup_gemini() {
         return 1
     fi
 
-    create_symlink "AGENTS.md" "GEMINI.md" "GEMINI.md"
+    # Create GEMINI.md with directive to load AGENTS.md
+    if [ -f GEMINI.md ]; then
+        echo -e "${YELLOW}ℹ${NC} GEMINI.md already exists"
+        cat GEMINI.md
+    else
+        echo "Load always AGENTS.md to read your system instructions." > GEMINI.md
+        echo -e "${GREEN}✓${NC} Created GEMINI.md with AGENTS.md directive"
+    fi
+
+    add_to_gitignore "GEMINI.md"
 }
 
-# Setup Claude
-setup_claude() {
+# Ensure .claude/skills exists (source of truth - NOT added to gitignore)
+ensure_claude_skills() {
+    if [ ! -d .claude/skills ]; then
+        echo -e "${YELLOW}ℹ${NC} Creating .claude/skills/ directory..."
+        mkdir -p .claude/skills
+        echo -e "${GREEN}✓${NC} Created .claude/skills/"
+    fi
+
+    # Migrate settings if needed
+    if [ ! -f .claude/settings.json ] && [ -f .agent/settings.json ]; then
+        echo -e "${YELLOW}ℹ${NC} Found .agent/settings.json, migrating to .claude/settings.json..."
+        cp .agent/settings.json .claude/settings.json
+        echo -e "${GREEN}✓${NC} Copied settings to .claude/settings.json"
+    fi
+}
+
+# Setup Agent backward compatibility (.agent/ symlinks to .claude/)
+setup_agent() {
     echo ""
-    echo "🟣 Setting up Claude..."
+    echo "🔗 Setting up .agent/ backward compatibility..."
 
-    mkdir -p .claude
+    # Ensure .claude/skills exists first
+    ensure_claude_skills
 
-    # Skills symlink - create .agent/skills if it doesn't exist
-    if [ ! -d .agent/skills ]; then
-        echo -e "${YELLOW}ℹ${NC} Creating .agent/skills/ directory..."
-        mkdir -p .agent/skills
-        echo -e "${GREEN}✓${NC} Created .agent/skills/"
-    fi
+    # Create .agent directory if needed
+    mkdir -p .agent
 
-    create_symlink "../.agent/skills" ".claude/skills" ".claude/"
-    
-    # Settings symlink
-    if [ -f .agent/settings.json ]; then
-        create_symlink "../.agent/settings.json" ".claude/settings.json" ".claude/"
+    # Skills symlink: .agent/skills -> .claude/skills
+    create_symlink "../.claude/skills" ".agent/skills" ".agent/"
+
+    # Settings symlink: .agent/settings.json -> .claude/settings.json
+    if [ -f .claude/settings.json ]; then
+        create_symlink "../.claude/settings.json" ".agent/settings.json" ".agent/"
     else
-        echo -e "${YELLOW}ℹ${NC} No .agent/settings.json found, skipping settings symlink"
+        echo -e "${YELLOW}ℹ${NC} No .claude/settings.json found, skipping settings symlink"
     fi
-    
-    # Ensure .claude/ is in gitignore even if no symlinks created
-    add_to_gitignore ".claude/"
+
+    # Ensure .agent/ is in gitignore
+    add_to_gitignore ".agent/"
+}
+
+# Setup OpenCode compatibility (.opencode/skill/ singular -> .claude/skills/)
+setup_opencode() {
+    echo ""
+    echo "🟢 Setting up OpenCode compatibility..."
+
+    # Ensure .claude/skills exists first
+    ensure_claude_skills
+
+    # Create .opencode directory if needed
+    mkdir -p .opencode
+
+    # Skills symlink: .opencode/skill (singular!) -> .claude/skills
+    create_symlink "../.claude/skills" ".opencode/skill" ".opencode/"
+
+    # Ensure .opencode/ is in gitignore
+    add_to_gitignore ".opencode/"
 }
 
 # Show usage
 show_usage() {
-    echo "Usage: $0 [gemini|claude|all]"
+    echo "Usage: $0 [agent|opencode|gemini|all]"
     echo ""
     echo "Options:"
-    echo "  gemini  - Create GEMINI.md symlink to AGENTS.md"
-    echo "  claude  - Create .claude/skills -> .agent/skills symlink"
-    echo "  all     - Setup all tools"
+    echo "  agent    - Create .agent/ symlinks to .claude/ (backward compat)"
+    echo "  opencode - Create .opencode/skill/ symlink to .claude/skills/"
+    echo "  gemini   - Create GEMINI.md with directive to load AGENTS.md"
+    echo "  all      - Setup all compatibility layers (agent + opencode + gemini)"
+    echo ""
+    echo "Directory structure:"
+    echo "  .claude/skills/   <- SOURCE (tracked in git)"
+    echo "  .agent/skills/    -> symlink to .claude/skills/ (gitignored)"
+    echo "  .opencode/skill/  -> symlink to .claude/skills/ (gitignored, singular!)"
+    echo "  GEMINI.md         <- directive file (gitignored)"
     echo ""
     echo "Examples:"
-    echo "  $0 gemini      # Setup Gemini only"
-    echo "  $0 all         # Setup all tools"
+    echo "  $0 agent         # Add .agent/ backward compat symlinks"
+    echo "  $0 opencode      # Add OpenCode compatibility"
+    echo "  $0 all           # Setup everything"
 }
 
 # Main
 case "${1:-}" in
+    agent)
+        setup_agent
+        ;;
+    opencode)
+        setup_opencode
+        ;;
     gemini)
         setup_gemini
         ;;
-    claude)
-        setup_claude
-        ;;
     all)
+        setup_agent
+        setup_opencode
         setup_gemini
-        setup_claude
         ;;
     -h|--help|"")
         show_usage
@@ -169,5 +225,5 @@ echo ""
 echo -e "${GREEN}✅ Setup complete!${NC}"
 echo ""
 echo "Verify with:"
-echo "  ls -la GEMINI.md .claude/ 2>/dev/null"
+echo "  ls -la .claude/ .agent/ .opencode/ GEMINI.md 2>/dev/null"
 echo "  git status"

@@ -1,13 +1,13 @@
-# Agent Global Skills
+# Claude Global Skills
 
-Agent global skills available across all repositories.
+Global skills available across all repositories.
 
 ## Quick Start
 
-After cloning, run the setup script to create a symlink so the skills are accessible from `~/.claude/skills/`:
+After cloning/moving to `~/.claude/skills/`, run the setup script to create a backward-compatible symlink at `~/.agent/skills/`:
 
 ```bash
-cd ~/.agent/skills
+cd ~/.claude/skills
 chmod +x setup.sh
 ./setup.sh
 ```
@@ -17,29 +17,31 @@ chmod +x setup.sh
 The setup script creates a symbolic link:
 
 ```
-~/.claude/skills/ → ~/.agent/skills/
+~/.agent/skills/ → ~/.claude/skills/
 ```
 
 This allows:
-- **Single source of truth**: All skills live in `~/.agent/skills/`
-- **Claude compatibility**: Skills remain accessible from `~/.claude/skills/` where Claude Code expects them
+- **Single source of truth**: All skills live in `~/.claude/skills/`
+- **Backward compatibility**: Skills remain accessible from `~/.agent/skills/` for older configurations
 
 ## Available Skills
 
 - **skill-builder/** - Create and evaluate Agent skills
 - **skills-index-updater/** - Regenerate the skill index
+- **llms-dashboard/** - Generate LLM usage dashboards
+- **humanize/** - Convert AI-written text to human-like writing
 
 ## Manual Setup (Alternative)
 
 If you prefer to set up manually:
 
 ```bash
-# Ensure .claude directory exists
-mkdir -p ~/.claude
+# Ensure .agent directory exists
+mkdir -p ~/.agent
 
 # Remove existing skills directory if needed
-# rm -rf ~/.claude/skills
+# rm -rf ~/.agent/skills
 
 # Create symlink
-ln -s ~/.agent/skills ~/.claude/skills
+ln -s ~/.claude/skills ~/.agent/skills
 ```

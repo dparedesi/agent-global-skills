@@ -1,6 +1,6 @@
 ---
 name: skills-index-updater
-description: Regenerate the Available Skill Index in AGENTS.md by scanning both global (~/.agent/skills/) and local (.agent/skills/) skills. Use when adding a new skill, removing a skill, updating skill descriptions, or when the user mentions "update skill index", "sync agents", or "regenerate index".
+description: Regenerate the Available Skill Index in AGENTS.md by scanning both global (~/.claude/skills/) and local (.claude/skills/) skills. Use when adding a new skill, removing a skill, updating skill descriptions, or when the user mentions "update skill index", "sync agents", or "regenerate index".
 ---
 
 # Skill Index Updater
@@ -11,7 +11,7 @@ Automatically regenerate the "Available Skill Index" section in `AGENTS.md` by s
 
 ```bash
 # Run from any repo - ALWAYS prompts for user confirmation
-python3 ~/.agent/skills/skills-index-updater/scripts/update_skill_index.py
+python3 ~/.claude/skills/skills-index-updater/scripts/update_skill_index.py
 ```
 
 ## Prerequisites
@@ -29,8 +29,8 @@ The script scans skills from **two locations**:
 
 | Location | Scope | Included By Default? |
 |----------|-------|---------------------|
-| `./.agent/skills/` | Local | ✅ Always |
-| `~/.agent/skills/` | Global | ❌ Only if opted-in |
+| `./.claude/skills/` | Local | ✅ Always |
+| `~/.claude/skills/` | Global | ❌ Only if opted-in |
 
 ### Interactive Mode (Default)
 
@@ -56,12 +56,20 @@ Would you like to include global skills as well? [y/N]:
 
 > **Why require confirmation?** Open-source repositories should only reference skills that exist in the repo itself. Users who clone your repo won't have access to your personal global skills. The prompt ensures a human makes this decision.
 
-### ⚠️ AI Agent Behavior
+### AI Agent Behavior
 
-**AI agents CANNOT run this script unattended.** The interactive prompt is mandatory:
-- No flags exist to skip the prompt
-- The script will block until a human types `y` or `n`
-- This ensures the **user always decides** what goes into AGENTS.md
+AI agents **CAN** run this script directly in the terminal:
+- **DO** run the script with `isBackground=false` so the user sees the interactive prompt
+- **DO** let the user respond to the prompt themselves (y/N for including global skills)
+- **NEVER** use `echo "y" |`, `yes |`, heredocs, or any stdin piping to bypass the prompt
+- **NEVER** assume what the user wants—let them choose
+
+**Correct behavior:**
+```bash
+python3 ~/.claude/skills/skills-index-updater/scripts/update_skill_index.py
+```
+
+The script will prompt the user interactively. Let them decide whether to include global skills.
 
 ---
 
@@ -71,14 +79,14 @@ Would you like to include global skills as well? [y/N]:
 
 ```bash
 cd /path/to/repo
-python3 ~/.agent/skills/skills-index-updater/scripts/update_skill_index.py
+python3 ~/.claude/skills/skills-index-updater/scripts/update_skill_index.py
 ```
 
 The script will:
 1. Find the repo root (looks for `.git` directory)
 2. **Prompt:** "Would you like to include global skills as well?"
-3. Scan local skills in `.agent/skills/`
-4. Scan global skills in `~/.agent/skills/` (only if user said yes)
+3. Scan local skills in `.claude/skills/`
+4. Scan global skills in `~/.claude/skills/` (only if user said yes)
 5. Parse YAML frontmatter from each `SKILL.md`
 6. Regenerate the index section in `AGENTS.md`
 
@@ -102,9 +110,9 @@ grep -A 10 "## Available Skills Index" AGENTS.md
 
 **Local-only mode (default):**
 ```
-Include global skills from ~/.agent/skills/? [y/N]: 
+Include global skills from ~/.claude/skills/? [y/N]: 
 Skipping global skills (local-only mode)
-Scanning local skills in: /path/to/repo/.agent/skills
+Scanning local skills in: /path/to/repo/.claude/skills
   Found 5 local skills
 
 Total: 5 skills
@@ -124,18 +132,18 @@ Updated: /path/to/repo/AGENTS.md
 
 - **Name:** `extract-videos`
   - **Trigger:** Extract video URLs from various sources...
-  - **Path:** `.agent/skills/extract-videos/SKILL.md`
+  - **Path:** `.claude/skills/extract-videos/SKILL.md`
 
 - **Name:** `download-transcripts`
   - **Trigger:** Download and process video transcripts...
-  - **Path:** `.agent/skills/download-transcripts/SKILL.md`
+  - **Path:** `.claude/skills/download-transcripts/SKILL.md`
 ```
 
 **With global skills (--include-global):**
 ```
-Scanning global skills in: /Users/you/.agent/skills
+Scanning global skills in: /Users/you/.claude/skills
   Found 2 global skills
-Scanning local skills in: /path/to/repo/.agent/skills
+Scanning local skills in: /path/to/repo/.claude/skills
   Found 5 local skills
 
 Total: 7 skills
@@ -159,14 +167,14 @@ Updated: /path/to/repo/AGENTS.md
 
 - **Name:** `skill-builder`
   - **Trigger:** Create, evaluate, and improve Agent skills...
-  - **Path:** `~/.agent/skills/skill-builder/SKILL.md`
+  - **Path:** `~/.claude/skills/skill-builder/SKILL.md`
 
 ### Local Skills
 *Specific to this repository*
 
 - **Name:** `extract-videos`
   - **Trigger:** Extract video URLs from various sources...
-  - **Path:** `.agent/skills/extract-videos/SKILL.md`
+  - **Path:** `.claude/skills/extract-videos/SKILL.md`
 ```
 
 ---
@@ -174,7 +182,7 @@ Updated: /path/to/repo/AGENTS.md
 ## Quality Rules
 
 - **Descriptions come from frontmatter** — Never manually edit the index
-- **Paths show scope** — Global uses `~/.agent/skills/`, local uses `.agent/skills/`
+- **Paths show scope** — Global uses `~/.claude/skills/`, local uses `.claude/skills/`
 - **Run after every skill change** — Create, delete, or modify triggers update
 
 ---
@@ -187,7 +195,7 @@ Updated: /path/to/repo/AGENTS.md
 | Skill not appearing | Missing frontmatter | Add `name:` and `description:` to SKILL.md |
 | YAML parse error | Invalid frontmatter syntax | Check for tabs, missing colons |
 | Index section not found | Missing marker in AGENTS.md | Add `## Available Skills Index` section |
-| Global skills missing | No `~/.agent/skills/` | Create the directory or ignore if no global skills |
+| Global skills missing | No `~/.claude/skills/` | Create the directory or ignore if no global skills |
 
 ---
 

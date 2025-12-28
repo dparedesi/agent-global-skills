@@ -64,11 +64,11 @@ Ask the user:
 > - Creating REFERENCE.md that repeats the workflow
 > - Writing EXAMPLES.md when 2 inline examples suffice
 >
-> **Read [TEMPLATES.md](~/.agent/skills/skill-builder/TEMPLATES.md)** for starter templates.
+> **Read [TEMPLATES.md](~/.claude/skills/skill-builder/TEMPLATES.md)** for starter templates.
 
 ### Step 3: Write the SKILL.md
 
-Use templates from [TEMPLATES.md](~/.agent/skills/skill-builder/TEMPLATES.md). Ensure:
+Use templates from [TEMPLATES.md](~/.claude/skills/skill-builder/TEMPLATES.md). Ensure:
 1. **Frontmatter** — valid YAML with `name` (must match folder name) and `description`
 2. **Description** — includes BOTH what it does AND when to use it
 3. **"Why?" line** — one sentence after title explaining the problem this solves
@@ -85,7 +85,7 @@ Use templates from [TEMPLATES.md](~/.agent/skills/skill-builder/TEMPLATES.md). E
 
 1. Run the `skills-index-updater` skill or script:
     ```bash
-    python3 ~/.agent/skills/skills-index-updater/scripts/update_skill_index.py
+    python3 ~/.claude/skills/skills-index-updater/scripts/update_skill_index.py
     ```
 2. Verify `AGENTS.md` contains your new/updated skill.
 
@@ -98,7 +98,7 @@ After creating, proceed to **Step 4** to evaluate.
 ### Step 4: Score the Skill
 
 > [!CRITICAL]
-> **Read [SCORING.md](~/.agent/skills/skill-builder/SCORING.md) completely** before scoring. It contains both rubrics and scoring worksheets.
+> **Read [SCORING.md](~/.claude/skills/skill-builder/SCORING.md) completely** before scoring. It contains both rubrics and scoring worksheets.
 
 **Process:**
 1. Read all skill files (SKILL.md + supporting files)
@@ -107,7 +107,7 @@ After creating, proceed to **Step 4** to evaluate.
 4. Use Combined Score Matrix in SCORING.md for verdict
 5. Identify gaps in both dimensions
 
-**Present results using the format in [SCORING.md](~/.agent/skills/skill-builder/SCORING.md#scoring-worksheet).**
+**Present results using the format in [SCORING.md](~/.claude/skills/skill-builder/SCORING.md#scoring-worksheet).**
 
 If either score < 90, proceed to **Step 5**.
 
@@ -157,7 +157,7 @@ Before declaring complete:
 - [ ] Examples show concrete input/output
 - [ ] Consistent terminology throughout
 
-Full checklist: **[CHECKLIST.md](~/.agent/skills/skill-builder/CHECKLIST.md)**
+Full checklist: **[CHECKLIST.md](~/.claude/skills/skill-builder/CHECKLIST.md)**
 
 ---
 
@@ -175,7 +175,7 @@ Full checklist: **[CHECKLIST.md](~/.agent/skills/skill-builder/CHECKLIST.md)**
 
 ## Reference
 
-- **[SCORING.md](~/.agent/skills/skill-builder/SCORING.md)** — Structure + Efficacy rubrics with worksheets
-- **[TEMPLATES.md](~/.agent/skills/skill-builder/TEMPLATES.md)** — Starter templates and common patterns
-- **[EXAMPLES.md](~/.agent/skills/skill-builder/EXAMPLES.md)** — Before/after improvement examples
-- **[CHECKLIST.md](~/.agent/skills/skill-builder/CHECKLIST.md)** — 50-point validation checklist
+- **[SCORING.md](~/.claude/skills/skill-builder/SCORING.md)** — Structure + Efficacy rubrics with worksheets
+- **[TEMPLATES.md](~/.claude/skills/skill-builder/TEMPLATES.md)** — Starter templates and common patterns
+- **[EXAMPLES.md](~/.claude/skills/skill-builder/EXAMPLES.md)** — Before/after improvement examples
+- **[CHECKLIST.md](~/.claude/skills/skill-builder/CHECKLIST.md)** — 50-point validation checklist
