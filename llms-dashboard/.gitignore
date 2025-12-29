@@ -2,6 +2,7 @@
 claude_dashboard.html
 gemini_dashboard.html
 vscode_dashboard.html
+kiro_dashboard.html
 
 # Aggregated history data (generated locally)
 data/*.json
@@ -9,3 +10,4 @@ data/*.json
 # Python cache
 __pycache__/
 *.pyc
+cline_dashboard.html

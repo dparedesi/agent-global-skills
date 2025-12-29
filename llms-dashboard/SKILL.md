@@ -50,6 +50,32 @@ python3 ~/.claude/skills/llms-dashboard/scripts/update_vscode_dashboard.py
 open ~/.claude/skills/llms-dashboard/vscode_dashboard.html
 ```
 
+### Kiro Dashboard
+
+```bash
+# Step 1: Aggregate all session history (.chat files, logs, settings)
+python3 ~/.claude/skills/llms-dashboard/scripts/aggregate_kiro_history.py
+
+# Step 2: Generate dashboard
+python3 ~/.claude/skills/llms-dashboard/scripts/update_kiro_dashboard.py
+
+# Step 3: Open in browser
+open ~/.claude/skills/llms-dashboard/kiro_dashboard.html
+```
+
+### Cline Dashboard
+
+```bash
+# Step 1: Aggregate task history from VS Code extension
+python3 ~/.claude/skills/llms-dashboard/scripts/aggregate_cline_history.py
+
+# Step 2: Generate dashboard
+python3 ~/.claude/skills/llms-dashboard/scripts/update_cline_dashboard.py
+
+# Step 3: Open in browser
+open ~/.claude/skills/llms-dashboard/cline_dashboard.html
+```
+
 > [!NOTE]
 > The `open` command works on macOS. For Linux, use `xdg-open` instead.
 
@@ -60,6 +86,8 @@ open ~/.claude/skills/llms-dashboard/vscode_dashboard.html
 | Claude | `~/.claude.json` (created after first Claude Code session) |
 | Gemini | `~/.gemini/tmp/` with chat history files |
 | VS Code | `~/Library/Application Support/Code/` (macOS) or `~/.config/Code/` (Linux) |
+| Kiro | `~/Library/Application Support/Kiro/User/globalStorage/kiro.kiroagent/**/*.chat` (macOS) |
+| Cline | `~/Library/Application Support/Code/User/globalStorage/asbx.amzn-cline/state/taskHistory.json` (macOS) |
 
 > [!WARNING]
 > Always run the **aggregate** script before the **update** script, otherwise charts will be empty.
@@ -83,6 +111,13 @@ This skill reads usage statistics from local configuration files (read-only) and
     - Historical reconstruction from `~/Library/Application Support/Code/User/History`
     - Project identification from `~/Library/Application Support/Code/User/globalStorage/storage.json`
 
+- **Kiro Dashboard:**
+    - Session data from `~/Library/Application Support/Kiro/User/globalStorage/kiro.kiroagent/**/*.chat`
+    - Log sessions from `~/Library/Application Support/Kiro/logs/`
+    - Settings from `~/.kiro/settings/cli.json`
+    - Powers registry from `~/.kiro/powers/registry.json`
+    - CLI history from `~/.kiro/.cli_bash_history`
+
 ## Files
 
 | File | Purpose |
@@ -100,6 +135,14 @@ This skill reads usage statistics from local configuration files (read-only) and
 | `scripts/aggregate_vscode_data.py` | Scans VS Code data, creates `data/vscode_data.json` |
 | `templates/vscode_template.html` | Template for VS Code dashboard |
 | `vscode_dashboard.html` | Generated VS Code output |
+| `scripts/update_kiro_dashboard.py` | Generates `kiro_dashboard.html` |
+| `scripts/aggregate_kiro_history.py` | Scans Kiro data, creates `data/kiro_history.json` |
+| `templates/kiro_template.html` | Template for Kiro dashboard |
+| `kiro_dashboard.html` | Generated Kiro output |
+| `scripts/update_cline_dashboard.py` | Generates `cline_dashboard.html` |
+| `scripts/aggregate_cline_history.py` | Scans Cline data, creates `data/cline_history.json` |
+| `templates/cline_template.html` | Template for Cline dashboard |
+| `cline_dashboard.html` | Generated Cline output |
 
 ## Expected Output
 

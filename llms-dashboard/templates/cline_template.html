@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cline Usage Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background-color: #0f1117; color: #e5e7eb; font-family: 'Segoe UI', sans-serif; }
+        .card { background-color: #1e293b; border: 1px solid #334155; border-radius: 12px; }
+        .stat-value { font-size: 1.5rem; font-weight: 700; color: #f8fafc; }
+        .stat-label { font-size: 0.875rem; color: #94a3b8; }
+    </style>
+</head>
+<body class="p-6">
+    <header class="mb-8 border-b border-gray-700 pb-4">
+        <h1 class="text-3xl font-bold text-white">Cline Usage Dashboard</h1>
+        <p class="text-gray-500">AI coding assistant analytics</p>
+        <div class="text-right text-gray-400 text-sm">Updated: {{TIMESTAMP}}</div>
+    </header>
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
+        <div class="card p-4"><div class="stat-label">Tasks</div><div class="stat-value">{{TOTAL_TASKS}}</div></div>
+        <div class="card p-4"><div class="stat-label">Total Cost</div><div class="stat-value text-green-400">${{TOTAL_COST}}</div></div>
+        <div class="card p-4"><div class="stat-label">Tokens In</div><div class="stat-value text-blue-400">{{TOKENS_IN}}</div></div>
+        <div class="card p-4"><div class="stat-label">Tokens Out</div><div class="stat-value text-purple-400">{{TOKENS_OUT}}</div></div>
+        <div class="card p-4"><div class="stat-label">Cache Writes</div><div class="stat-value text-orange-400">{{CACHE_WRITES}}</div></div>
+        <div class="card p-4"><div class="stat-label">Workspaces</div><div class="stat-value text-cyan-400">{{WORKSPACES}}</div></div>
+    </div>
+    <div class="card p-6 mb-8"><h3 class="text-lg font-semibold mb-4">Daily Activity</h3><canvas id="dailyChart" height="80"></canvas></div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="card p-6"><h3 class="text-lg font-semibold mb-4">Daily Cost ($)</h3><canvas id="costChart"></canvas></div>
+        <div class="card p-6"><h3 class="text-lg font-semibold mb-4">Top Workspaces</h3><canvas id="workspaceChart"></canvas></div>
+    </div>
+    <div class="card p-6 mb-8"><h3 class="text-lg font-semibold mb-4">Recent Tasks</h3>
+        <table class="w-full text-left"><thead class="border-b border-gray-600"><tr>
+            <th class="p-2 text-gray-400">Date</th><th class="p-2 text-gray-400">Task</th><th class="p-2 text-gray-400">Tokens</th><th class="p-2 text-gray-400">Cost</th>
+        </tr></thead><tbody>{{RECENT_TASKS}}</tbody></table>
+    </div>
+<script>
+const daily = {{DAILY_DATA}};
+const workspaces = {{WORKSPACE_DATA}};
+new Chart(document.getElementById('dailyChart').getContext('2d'), {type:'line',data:{labels:daily.map(d=>d.date),datasets:[{label:'Tasks',data:daily.map(d=>d.tasks),borderColor:'#60a5fa',tension:0.3}]},options:{responsive:true,plugins:{legend:{labels:{color:'#94a3b8'}}},scales:{x:{ticks:{color:'#94a3b8'}},y:{ticks:{color:'#94a3b8'}}}}});
+new Chart(document.getElementById('costChart').getContext('2d'), {type:'bar',data:{labels:daily.map(d=>d.date),datasets:[{label:'Cost ($)',data:daily.map(d=>d.cost.toFixed(2)),backgroundColor:'rgba(74,222,128,0.6)'}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#94a3b8'}},y:{ticks:{color:'#94a3b8'}}}}});
+new Chart(document.getElementById('workspaceChart').getContext('2d'), {type:'doughnut',data:{labels:workspaces.map(w=>w.name),datasets:[{data:workspaces.map(w=>w.tasks),backgroundColor:['#60a5fa','#a855f7','#4ade80','#fb923c','#f472b6','#22d3ee','#facc15','#94a3b8']}]},options:{responsive:true,plugins:{legend:{position:'right',labels:{color:'#94a3b8'}}}}});
+</script>
+</body>
+</html>
