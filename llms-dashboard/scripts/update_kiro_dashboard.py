@@ -63,6 +63,7 @@ def generate_dashboard():
     workspaces = data.get('workspaces', {})
     daily_stats = data.get('daily_stats', [])
     cli_history = data.get('cli_history', {})
+    cli_sqlite = data.get('cli_sqlite', {})
     log_sessions = data.get('log_sessions', [])
 
     # Summary stats
@@ -93,6 +94,27 @@ def generate_dashboard():
     chart_bot = [d['botMessages'] for d in daily_stats]
     chart_tool = [d['toolMessages'] for d in daily_stats]
     chart_tokens = [d['tokens'] for d in daily_stats]
+
+    # Model data for charts
+    model_data = [{'name': k, 'count': v} for k, v in sorted(models.items(), key=lambda x: -x[1])]
+    
+    # Prepare daily model breakdown (stacked bar chart data)
+    all_models = sorted(models.keys())
+    daily_models_data = {model: [] for model in all_models}
+    for d in daily_stats:
+        day_models = d.get('models', {})
+        for model in all_models:
+            daily_models_data[model].append(day_models.get(model, 0))
+
+    # Prepare CLI SQLite data for charts
+    cli_daily_stats = cli_sqlite.get('daily_stats', [])
+    cli_dates = [d['date'] for d in cli_daily_stats]
+    cli_all_models = sorted(cli_sqlite.get('models', {}).keys())
+    cli_models_data = {model: [] for model in cli_all_models}
+    for d in cli_daily_stats:
+        day_models = d.get('models', {})
+        for model in cli_all_models:
+            cli_models_data[model].append(day_models.get(model, 0))
 
     # Workflow data
     workflow_data = [{'name': k, 'count': v} for k, v in sorted(workflows.items(), key=lambda x: -x[1])]
@@ -170,6 +192,12 @@ def generate_dashboard():
         '{{ACTION_DATA}}': json.dumps(action_data),
         '{{CONTEXT_DATA}}': json.dumps(context_data),
         '{{WORKSPACE_DATA}}': json.dumps(workspace_data),
+        '{{MODEL_DATA}}': json.dumps(model_data),
+        '{{DAILY_MODELS_DATA}}': json.dumps(daily_models_data),
+        '{{ALL_MODELS}}': json.dumps(all_models),
+        '{{CLI_DATES}}': json.dumps(cli_dates),
+        '{{CLI_MODELS_DATA}}': json.dumps(cli_models_data),
+        '{{CLI_ALL_MODELS}}': json.dumps(cli_all_models),
         '{{RECENT_SESSIONS_ROWS}}': recent_rows,
     }
 

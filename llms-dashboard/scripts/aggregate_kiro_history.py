@@ -18,6 +18,7 @@ Output: ~/.claude/skills/llms-dashboard/data/kiro_history.json
 import os
 import json
 import glob
+import sqlite3
 from datetime import datetime, timezone
 from collections import defaultdict
 from pathlib import Path
@@ -33,6 +34,7 @@ KIRO_DOT_DIR = Path.home() / ".kiro"
 KIRO_CLI_SETTINGS = KIRO_DOT_DIR / "settings" / "cli.json"
 KIRO_POWERS_REGISTRY = KIRO_DOT_DIR / "powers" / "registry.json"
 KIRO_CLI_HISTORY = KIRO_DOT_DIR / ".cli_bash_history"
+KIRO_CLI_SQLITE = Path.home() / "Library" / "Application Support" / "kiro-cli" / "data.sqlite3"
 
 OUTPUT_DIR = Path(__file__).parent.parent / "data"
 OUTPUT_FILE = OUTPUT_DIR / "kiro_history.json"
@@ -276,6 +278,74 @@ def load_powers_registry():
 
 
 # =============================================================================
+# KIRO CLI SQLITE DATABASE PARSER
+# =============================================================================
+
+def scan_cli_sqlite():
+    """Scan Kiro CLI SQLite database for conversation data"""
+    cli_data = {
+        'total_conversations': 0,
+        'total_requests': 0,
+        'models': defaultdict(int),
+        'daily_stats': defaultdict(lambda: {'requests': 0, 'models': defaultdict(int)}),
+    }
+    
+    if not KIRO_CLI_SQLITE.exists():
+        print(f"  ⚠️  Kiro CLI SQLite not found: {KIRO_CLI_SQLITE}")
+        return cli_data
+    
+    try:
+        conn = sqlite3.connect(str(KIRO_CLI_SQLITE))
+        cur = conn.cursor()
+        
+        # Get all conversations
+        cur.execute('SELECT key, conversation_id, value, created_at FROM conversations_v2')
+        
+        for row in cur.fetchall():
+            key, conv_id, value, created_at = row
+            cli_data['total_conversations'] += 1
+            
+            try:
+                data = json.loads(value)
+                history = data.get('history', [])
+                
+                # Get date for daily stats
+                dt = datetime.fromtimestamp(created_at / 1000)
+                date_str = dt.strftime('%Y-%m-%d')
+                
+                for msg in history:
+                    meta = msg.get('request_metadata', {})
+                    if meta.get('request_id'):
+                        cli_data['total_requests'] += 1
+                        model_id = meta.get('model_id', 'auto')
+                        cli_data['models'][model_id] += 1
+                        cli_data['daily_stats'][date_str]['requests'] += 1
+                        cli_data['daily_stats'][date_str]['models'][model_id] += 1
+            except:
+                pass
+        
+        conn.close()
+        
+        # Convert defaultdicts for output
+        cli_data['models'] = dict(cli_data['models'])
+        daily_list = []
+        for d in sorted(cli_data['daily_stats'].keys()):
+            daily_list.append({
+                'date': d,
+                'requests': cli_data['daily_stats'][d]['requests'],
+                'models': dict(cli_data['daily_stats'][d]['models'])
+            })
+        cli_data['daily_stats'] = daily_list
+        
+        print(f"  ✅ Found {cli_data['total_conversations']} CLI conversations, {cli_data['total_requests']} requests")
+        
+    except Exception as e:
+        print(f"  ❌ Error reading CLI SQLite: {e}")
+    
+    return cli_data
+
+
+# =============================================================================
 # MAIN AGGREGATION
 # =============================================================================
 
@@ -309,7 +379,11 @@ def main():
     cli_settings = load_cli_settings()
     powers = load_powers_registry()
     
-    # 5. Calculate aggregates
+    # 5. Scan CLI SQLite database
+    print("\n🗄️  Scanning CLI SQLite database...")
+    cli_sqlite = scan_cli_sqlite()
+    
+    # 6. Calculate aggregates
     total_sessions = len(sessions)
     total_duration_ms = sum(s.get('durationMs', 0) for s in sessions)
     total_messages = sum(s.get('totalMessages', 0) for s in sessions)
@@ -357,6 +431,7 @@ def main():
         'toolMessages': 0,
         'durationMs': 0,
         'tokens': 0,
+        'models': defaultdict(int),
     })
     
     for s in sessions:
@@ -371,8 +446,15 @@ def main():
             daily_stats[date]['toolMessages'] += s.get('toolMessages', 0)
             daily_stats[date]['durationMs'] += s.get('durationMs', 0)
             daily_stats[date]['tokens'] += s.get('estimatedTokens', 0)
+            model_id = s.get('modelId', 'unknown')
+            daily_stats[date]['models'][model_id] += 1
     
-    daily_list = [daily_stats[d] for d in sorted(daily_stats.keys())]
+    # Convert defaultdicts to regular dicts for JSON serialization
+    daily_list = []
+    for d in sorted(daily_stats.keys()):
+        day_data = dict(daily_stats[d])
+        day_data['models'] = dict(day_data['models'])
+        daily_list.append(day_data)
     
     # Build output
     output = {
@@ -407,6 +489,7 @@ def main():
         'settings': cli_settings,
         'powers': powers,
         'cli_history': cli_history,
+        'cli_sqlite': cli_sqlite,
         'log_sessions': log_sessions,
         
         'workflows': dict(workflows),
@@ -430,7 +513,8 @@ def main():
     print("=" * 60)
     
     print(f"\n📦 Data Sources:")
-    print(f"   {'✅' if sessions else '❌'} Chat sessions: {len(sessions)}")
+    print(f"   {'✅' if sessions else '❌'} IDE sessions: {len(sessions)}")
+    print(f"   {'✅' if cli_sqlite.get('total_requests') else '❌'} CLI requests: {cli_sqlite.get('total_requests', 0)}")
     print(f"   {'✅' if log_sessions else '❌'} Log sessions: {len(log_sessions)}")
     print(f"   {'✅' if cli_history['total'] else '❌'} CLI commands: {cli_history['total']}")
     print(f"   {'✅' if cli_settings else '❌'} CLI settings loaded")
