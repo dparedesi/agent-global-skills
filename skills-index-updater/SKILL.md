@@ -1,11 +1,23 @@
 ---
 name: skills-index-updater
-description: Regenerate the Available Skill Index in AGENTS.md by scanning both global (~/.claude/skills/) and local (.claude/skills/) skills. Use when adding a new skill, removing a skill, updating skill descriptions, or when the user mentions "update skill index", "sync agents", or "regenerate index".
+description: Regenerate the Available Skill Index in AGENTS.md for IDEs without native skill support (Kiro, Gemini, etc.). ONLY use when the user EXPLICITLY asks to "update skill index", "sync agents", "regenerate index", or "update AGENTS.md". Do NOT auto-invoke after creating/modifying skills - Claude Code has native skill support and does not need this.
 ---
 
 # Skill Index Updater
 
 Automatically regenerate the "Available Skill Index" section in `AGENTS.md` by scanning both global and local skills.
+
+---
+
+> **⚠️ STOP: Check Before Running**
+>
+> This skill is **ONLY for IDEs without native skill support** (Kiro, Gemini, Cursor, etc.).
+>
+> **Claude Code users:** You do NOT need this - Claude Code has native skill indexing built-in.
+>
+> Only run if the user **explicitly** asked to update AGENTS.md for compatibility with other tools.
+
+---
 
 ## Quick Start
 

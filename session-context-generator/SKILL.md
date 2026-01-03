@@ -11,7 +11,7 @@ Generate comprehensive context restoration documents that enable seamless agent 
 
 ## Quick Start
 
-1. Gather session information → 2. Generate context document → 3. Save to restore-context/ folder → Done
+1. Gather session information → 2. Generate context document → 3. Validate document → 4. Save to restore-context/ folder → 5. Ensure restore-context/ is in .gitignore → Done
 
 ## Prerequisites
 
@@ -98,6 +98,35 @@ mkdir -p restore-context
 
 > [!TIP]
 > Include a note in the document about what log files or other artifacts were generated during the session that the next agent might want to review.
+
+### 5. Ensure restore-context is in .gitignore
+
+The `restore-context/` folder should NOT be committed to version control. It contains session-specific context that may include sensitive work-in-progress details.
+
+**Check and update .gitignore:**
+
+```bash
+# Check if .gitignore exists and if restore-context is already ignored
+if [ -f .gitignore ]; then
+    if ! grep -q "^restore-context" .gitignore; then
+        echo "restore-context/" >> .gitignore
+        echo "Added restore-context/ to .gitignore"
+    else
+        echo "restore-context/ already in .gitignore"
+    fi
+else
+    echo "restore-context/" > .gitignore
+    echo "Created .gitignore with restore-context/"
+fi
+```
+
+> [!WARNING]
+> Always verify `restore-context/` is in `.gitignore` before completing the handoff. Session context files should remain local and not be pushed to remote repositories.
+
+**Validation:**
+- [ ] `.gitignore` file exists in project root
+- [ ] `restore-context/` entry is present in `.gitignore`
+- [ ] Running `git status` does not show `restore-context/` as untracked (if git repo)
 
 ## Document Template
 
