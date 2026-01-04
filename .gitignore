@@ -1,1 +1,3 @@
-claude-dashboard/dashboard.html.DS_Store
+*.DS_Store
+claude-dashboard/dashboard.html
+.claude
