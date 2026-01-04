@@ -1,5 +1,6 @@
 ---
 name: inbox-assistant
+source: inboxd
 description: Manage Gmail inbox with AI-powered triage, cleanup, and restore. Use when the user mentions inbox, email triage, clean inbox, email cleanup, check email, email summary, delete emails, manage inbox, or wants to organize their email.
 ---
 
@@ -72,7 +73,10 @@ Use when: Heavy inbox (>30 unread), user wants thoroughness, language like "what
 |------|---------|
 | Check status | `inbox summary --json` |
 | Full triage | `inbox analyze --count 50` → classify → present |
-| Delete emails | `inbox delete --ids "id1,id2" --confirm` |
+| Analyze by sender | `inbox analyze --count 50 --group-by sender` |
+| Delete by ID | `inbox delete --ids "id1,id2" --confirm` |
+| Delete by sender | `inbox delete --sender "linkedin" --dry-run` → confirm → delete |
+| Delete by subject | `inbox delete --match "weekly digest" --dry-run` |
 | Undo deletion | `inbox restore --last N` |
 
 ## Package Information
@@ -175,18 +179,39 @@ To stop: `launchctl unload ~/Library/LaunchAgents/com.yourname.inboxd.plist`
 | `inbox analyze --count 50` | Get email data for analysis | JSON array of email objects |
 | `inbox analyze --count 50 --all` | Include read emails | JSON array (read + unread) |
 | `inbox analyze --since 7d` | Only emails from last 7 days | JSON array (filtered by date) |
+| `inbox analyze --group-by sender` | Group emails by sender domain | `{groups: [{sender, count, emails}], totalCount}` |
 | `inbox accounts` | List configured accounts | Account names and emails |
 
 ### Actions
 
 | Command | Description |
 |---------|-------------|
-| `inbox delete --ids "id1,id2,id3" --confirm` | Move emails to trash |
+| `inbox delete --ids "id1,id2,id3" --confirm` | Move emails to trash by ID |
+| `inbox delete --sender "pattern" --dry-run` | Preview deletion by sender filter |
+| `inbox delete --match "pattern" --dry-run` | Preview deletion by subject filter |
+| `inbox delete --sender "X" --match "Y" --confirm` | Delete by combined filters (AND) |
+| `inbox delete --sender "X" --limit 100 --confirm` | Override 50-email safety limit |
+| `inbox delete --sender "ab" --force --confirm` | Override short-pattern warning |
 | `inbox restore --last N` | Restore last N deleted emails |
 | `inbox restore --ids "id1,id2"` | Restore specific emails |
 | `inbox mark-read --ids "id1,id2"` | Mark emails as read (remove UNREAD label) |
 | `inbox archive --ids "id1,id2" --confirm` | Archive emails (remove from inbox, keep in All Mail) |
 | `inbox deletion-log` | View recent deletions |
+
+### Smart Filtering Options
+
+| Option | Description |
+|--------|-------------|
+| `--sender <pattern>` | Case-insensitive substring match on From field |
+| `--match <pattern>` | Case-insensitive substring match on Subject field |
+| `--limit <N>` | Max emails for filter operations (default: 50) |
+| `--force` | Override safety warnings (short patterns, large batches) |
+| `--dry-run` | Preview what would be deleted without deleting |
+
+**Safety behavior:**
+- Pattern < 3 chars → requires `--force`
+- Matches > 100 emails → requires `--force`
+- Filter-based deletion always shows preview (even with `--confirm`)
 
 ### Email Object Shape
 ```json
@@ -200,6 +225,34 @@ To stop: `launchctl unload ~/Library/LaunchAgents/com.yourname.inboxd.plist`
   "account": "personal",
   "labelIds": ["UNREAD", "INBOX", "CATEGORY_PROMOTIONS"]
 }
+```
+
+### Grouped Analysis Output (`--group-by sender`)
+```json
+{
+  "groups": [
+    {
+      "sender": "linkedin.com",
+      "senderDisplay": "LinkedIn Jobs <jobs@linkedin.com>",
+      "count": 5,
+      "emails": [
+        {"id": "abc123", "subject": "15 new jobs for you", "date": "...", "account": "personal"}
+      ]
+    },
+    {
+      "sender": "github.com",
+      "senderDisplay": "GitHub <noreply@github.com>",
+      "count": 3,
+      "emails": [...]
+    }
+  ],
+  "totalCount": 8
+}
+```
+
+Use grouped analysis to proactively offer batch operations:
+```
+You have 5 emails from LinkedIn. Delete them all?
 ```
 
 ---
@@ -396,11 +449,15 @@ When user has job-related emails (LinkedIn, Indeed, recruiters) and wants to eva
 | "Check my emails" | Quick status + recommendations | Summary → recommend next step |
 | "Clean up my inbox" | Delete junk, keep important | Focus on Newsletters/Promos/Notifications |
 | "What's important?" | Surface action items | Classify, highlight Action Required only |
-| "Delete all from [sender]" | Bulk sender cleanup | Search by sender, confirm count, delete |
+| "Delete all from [sender]" | Bulk sender cleanup | `--sender "X" --dry-run` → confirm → `--ids` |
+| "Delete [sender]'s emails" | Bulk sender cleanup | Two-step pattern with `--sender` filter |
+| "Delete the security emails" | Subject-based cleanup | `--match "security" --dry-run` → confirm → `--ids` |
+| "What senders have the most emails?" | Inbox analysis | `inbox analyze --group-by sender` |
 | "I keep getting these" | Recurring annoyance | Suggest unsubscribe/filter, then delete batch |
 | "Check [specific account]" | Single-account focus | Skip other accounts entirely |
 | "Undo" / "Restore" | Recover deleted emails | `inbox restore --last N` |
 | "What are these companies?" | Research job/opportunity emails | Fetch websites, assess legitimacy |
+| "Research these job opportunities" | Job alert evaluation | Job Research workflow (see below) |
 
 ---
 
@@ -416,6 +473,90 @@ When user has job-related emails (LinkedIn, Indeed, recruiters) and wants to eva
 5. **Preserve by default** - When in doubt about classification, keep the email
 6. **Multi-Account Safety** - Always use `--account <name>` for `delete` and `analyze` commands
 7. **Respect user preferences** - If they say "don't list everything", remember and adapt
+
+---
+
+## Two-Step Deletion Pattern
+
+> [!IMPORTANT]
+> **ALWAYS use this pattern for filter-based deletions.** Filters are for DISCOVERY. IDs are for EXECUTION.
+
+This pattern prevents accidental mass deletion. When user says "delete LinkedIn emails", never run `inbox delete --sender "linkedin" --confirm` directly—it could delete hundreds of emails.
+
+### The Pattern
+
+1. **Discover** - Find what matches the filter
+   ```bash
+   inbox delete --sender "linkedin" --dry-run
+   ```
+   Output shows emails that would be deleted, plus IDs for programmatic use.
+
+2. **Confirm** - Show user what will be deleted, get explicit approval
+   ```
+   Found 5 LinkedIn emails:
+   - Job alert: "15 new jobs for you"
+   - Connection: "John wants to connect"
+   - Message: "New message from recruiter"
+   ...
+
+   Delete all 5? (y/n)
+   ```
+
+3. **Execute** - Delete with explicit IDs (from dry-run output)
+   ```bash
+   inbox delete --ids "id1,id2,id3,id4,id5" --confirm
+   ```
+
+### When to Use Each Approach
+
+| User Intent | Approach |
+|-------------|----------|
+| "Delete that email from Jules" (singular, specific) | Use `--ids` directly after identifying it |
+| "Delete the 3 LinkedIn emails" (small, known batch) | Two-step pattern or direct if confident |
+| "Delete all LinkedIn emails" (batch cleanup) | **Two-step pattern required** |
+| "Clean up newsletters" (category cleanup) | **Two-step pattern required** |
+
+### Precision Rule
+
+- **1-3 specific emails** → Use `--ids` directly
+- **User says "the email" (singular)** but filter finds multiple → **ASK which one**
+- **Batch cleanup ("all from X")** → Two-step pattern
+
+### Example: Same Sender, Different Emails
+
+**User:** "Delete the LinkedIn job alert from yesterday"
+
+❌ **Bad agent behavior:**
+```bash
+inbox delete --sender "linkedin" --confirm  # Deletes ALL LinkedIn emails!
+```
+
+✅ **Good agent behavior:**
+```bash
+# Step 1: Find LinkedIn emails
+inbox analyze --count 20
+# Sees: 3 LinkedIn emails - job alert, connection request, message
+
+# Step 2: Identify the specific one by subject
+# (job alert has subject containing "jobs for you")
+
+# Step 3: Delete precisely
+inbox delete --ids "18e9abc" --confirm  # Just the job alert
+```
+
+### Ambiguity Handling
+
+If `--dry-run` shows multiple emails but user said "delete **the** email from X" (singular):
+```
+I found 5 emails from LinkedIn. Which one did you mean?
+
+1. "15 new jobs for you" (job alert)
+2. "John wants to connect" (connection)
+3. "New message from recruiter" (message)
+...
+
+Reply with the number or describe which one.
+```
 
 ---
 
