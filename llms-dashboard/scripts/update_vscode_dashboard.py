@@ -59,7 +59,7 @@ def generate_dashboard():
     
     # Project Stats
     project_parents = [p.get('parent') for p in projects if p.get('parent')]
-    # Clean up parents to be more readable (e.g. /Users/danielparedes/Documents -> ~/Documents)
+    # Clean up parents to be more readable (e.g. /Users/you/Documents -> ~/Documents)
     home_dir = str(Path.home())
     clean_parents = []
     for p in project_parents:

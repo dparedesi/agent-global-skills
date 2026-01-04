@@ -26,7 +26,7 @@ def scan_projects(storage_file):
             
         workspaces = data.get('profileAssociations', {}).get('workspaces', {})
         for uri, profile in workspaces.items():
-            # URI is like file:///Users/danielparedes/Documents/Github/mbb-coaching-app
+            # URI is like file:///Users/you/Documents/Github/my-project
             if uri.startswith('file://'):
                 path = uri.replace('file://', '')
                 # Decode URL encoding (e.g. %20 -> space)

@@ -28,7 +28,7 @@ This allows:
 
 - **cli-onboarding/** - First-time user experience for CLI packages (setup wizards, edge cases, validation)
 - **commit-and-push/** - Automates git commit and push operations
-- **elevate/** - Framework to transform code to production quality using 12 patterns
+- **elevate-code/** - Framework to transform code to production quality using 12 patterns
 - **humanize/** - Convert AI-written text to human-like writing
 - **inbox-assistant/** - AI-powered tool for managing and triaging Gmail inboxes
 - **llms-dashboard/** - Generate dashboards to visualize LLM usage statistics

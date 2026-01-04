@@ -153,8 +153,72 @@ Run 'tool setup' to configure, or manually:
 | Missing dependencies | List what's missing with install commands |
 | Network failures | Graceful error with retry suggestion |
 | Already configured | Ask before overwriting |
+| Outdated version | Use update-notifier to alert users |
 
-### 7. Platform Detection
+### 7. Update Notifier
+
+Alert users when a newer version is available:
+
+```javascript
+// Node.js - using update-notifier package
+const updateNotifier = require('update-notifier');
+const pkg = require('./package.json');
+
+// Check for updates (non-blocking, cached)
+updateNotifier({ pkg }).notify();
+```
+
+```python
+# Python - using packaging and httpx (or requests)
+import httpx
+from importlib.metadata import version
+from packaging.version import parse
+
+def check_for_updates(package_name: str) -> None:
+    """Check PyPI for newer version and notify user."""
+    try:
+        current = version(package_name)
+        response = httpx.get(f"https://pypi.org/pypi/{package_name}/json", timeout=2)
+        latest = response.json()["info"]["version"]
+        
+        if parse(latest) > parse(current):
+            print(f"\n┌{'─' * 44}┐")
+            print(f"│  Update available {current} → {latest}".ljust(45) + "│")
+            print(f"│  Run: pip install --upgrade {package_name}".ljust(45) + "│")
+            print(f"└{'─' * 44}┘\n")
+    except Exception:
+        pass  # Silently fail - don't block CLI usage
+
+# Call early in main()
+check_for_updates("tool-name")
+```
+
+This displays (only when update available):
+```
+┌────────────────────────────────────────────┐
+│                                            │
+│   Update available 1.0.5 → 1.0.7           │
+│   Run npm install -g tool-name to update   │
+│                                            │
+└────────────────────────────────────────────┘
+```
+
+**Key behaviors:**
+- Non-blocking: check happens quickly with timeout
+- Cached: Node.js version caches (1 day default); Python can use file-based cache
+- Unobtrusive: only shows message when update exists
+- Fails silently: never breaks CLI if network unavailable
+
+**Installation:**
+```bash
+# Node.js
+npm install update-notifier
+
+# Python
+pip install packaging httpx
+```
+
+### 8. Platform Detection
 
 ```javascript
 // Node.js - for platform-specific features
@@ -176,7 +240,7 @@ if platform.system() != 'Darwin':
     return
 ```
 
-### 8. Configuration Location Standards
+### 9. Configuration Location Standards
 
 | Platform | Location |
 |----------|----------|
@@ -266,10 +330,11 @@ afterEach(() => fs.rmSync(TEST_DIR, { recursive: true, force: true }));
 4. **Add first-run detection** - Welcome message when unconfigured
 5. **Add `doctor` command** - If complex dependencies exist
 6. **Handle edge cases** - SIGINT, paths, platform
-7. **Update README** - Setup as primary quick start
-8. **Add tests** - Cover validation and edge cases
-9. **Verify package metadata** - All fields present
-10. **Create LICENSE file** - If missing
+7. **Add update-notifier** - Alert users of new versions
+8. **Update README** - Setup as primary quick start
+9. **Add tests** - Cover validation and edge cases
+10. **Verify package metadata** - All fields present
+11. **Create LICENSE file** - If missing
 
 ## Example Implementations
 
