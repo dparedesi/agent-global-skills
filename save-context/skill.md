@@ -31,7 +31,7 @@ The conversation history is already in your context. Extract from it directly.
    - "Any blockers or decisions pending your input?"
 3. **Generate the context document**
 4. **Save to `.context/`**
-5. **Offer .gitignore protection** (if git repo exists)
+5. **Offer .gitignore protection**
 
 ## Template
 
@@ -81,7 +81,7 @@ Generate **only sections with content**. Omit empty sections entirely.
 
 ## File Management
 
-### Location & Naming
+### Location (in project root) & Naming
 
 ```
 .context/
@@ -90,31 +90,29 @@ Generate **only sections with content**. Omit empty sections entirely.
 ```
 
 ```bash
-mkdir -p .context
-FILENAME=".context/$(date +%Y-%m-%d-%H%M).md"
+PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+mkdir -p "$PROJECT_ROOT/.context"
+FILENAME="$PROJECT_ROOT/.context/$(date +%Y-%m-%d-%H%M).md"
 ```
 
 ### Gitignore Protection
 
 Context files should NEVER be pushed to remote repositories.
 
-After saving the context file, check if this is a git repo and if `.context/` is protected:
+After saving the context file, ensure `.context/` is protected:
 
 ```bash
-if [ -d .git ]; then
-    if [ -f .gitignore ] && grep -q "^\.context" .gitignore; then
-        echo "Already protected"
-    else
-        echo "NOT protected - .context/ is not in .gitignore"
-    fi
+if [ ! -f .gitignore ]; then
+    echo ".context/" > .gitignore
+    echo "Created .gitignore with .context/"
+elif grep -q "^\.context" .gitignore; then
+    echo "Already protected"
+else
+    echo "" >> .gitignore
+    echo ".context/" >> .gitignore
+    echo "Added .context/ to .gitignore"
 fi
 ```
-
-If not protected, **ask the user:**
-
-> ".context/ is not in your .gitignore. Add it to prevent accidentally pushing context files to your repo?"
-
-Only modify `.gitignore` if the user confirms.
 
 ## Quality Checklist
 

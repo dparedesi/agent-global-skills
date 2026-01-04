@@ -1,4 +1,5 @@
 ---
+name: commit-and-push
 allowed-tools: Bash(git add:*), Bash(git status:*), Bash(git commit:*), Bash(git push:*), Bash(gh pr create:*)
 description: Create a git commit and push
 ---
