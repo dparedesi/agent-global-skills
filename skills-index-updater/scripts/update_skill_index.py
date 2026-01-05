@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """
-Skill Index Updater - Regenerate the Available Skill Index in AGENTS.md
+Skill Index Updater - Regenerate skill indexes for IDEs without native skill support.
 
-This script scans both local and global skill directories, extracts frontmatter
-from SKILL.md files, and updates the index section in AGENTS.md.
+This script scans skill directories and updates indexes in two locations:
+- Global skills: Updated in ~/.kiro/steering/global.md (always)
+- Local skills: Updated in AGENTS.md (only when NOT in home directory)
 
 Architecture Note:
-    - Local skills: `.claude/skills/` in the current repo (project-specific)
-    - Global skills: `~/.claude/skills/` (available across all repos)
-    - Both are listed in AGENTS.md for VS Code/Kiro compatibility
-    - Skills are grouped by scope (Global first, then Local)
+    - Global skills: ~/.claude/skills/ (available across all repos)
+    - Local skills: .claude/skills/ in the current repo (project-specific)
+    - When working from ~/, only global skills exist (no local skills)
 
 Usage:
     python update_skill_index.py
@@ -17,7 +17,7 @@ Usage:
 
 Requirements:
     - Python 3.8+
-    - PyYAML (pip install pyyaml)
+    - PyYAML (pip install pyyaml) - optional, falls back to regex parsing
 """
 
 import argparse
@@ -44,11 +44,17 @@ def parse_yaml_fallback(text: str) -> Optional[Dict]:
             result[match.group(1)] = match.group(2).strip()
     return result if result else None
 
-# Paths
-GLOBAL_SKILLS_DIR = Path.home() / ".claude" / "skills"
 
-# Local paths - determined at runtime based on where script is invoked
-# When running from a repo, we find the repo's .claude/skills/ directory
+# Paths
+HOME_DIR = Path.home()
+GLOBAL_SKILLS_DIR = HOME_DIR / ".claude" / "skills"
+GLOBAL_MD = HOME_DIR / ".kiro" / "steering" / "global.md"
+
+# Markers for the index sections
+INDEX_START = "## Available Skills Index"
+INDEX_END = "---"
+
+
 def find_repo_root() -> Optional[Path]:
     """Find the repository root by looking for .git directory."""
     cwd = Path.cwd()
@@ -57,18 +63,12 @@ def find_repo_root() -> Optional[Path]:
             return parent
     return None
 
-REPO_ROOT = find_repo_root()
-LOCAL_SKILLS_DIR = REPO_ROOT / ".claude" / "skills" if REPO_ROOT else None
-AGENTS_MD = REPO_ROOT / "AGENTS.md" if REPO_ROOT else None
 
-# Path prefixes for generated index
-LOCAL_SKILLS_PATH_PREFIX = ".claude/skills"
-GLOBAL_SKILLS_PATH_PREFIX = "~/.claude/skills"
-
-
-# Markers for the index section
-INDEX_START = "## Available Skills Index"
-INDEX_END = "---"
+def is_home_directory() -> bool:
+    """Check if we're working from the home directory."""
+    cwd = Path.cwd().resolve()
+    home = HOME_DIR.resolve()
+    return cwd == home
 
 
 def parse_frontmatter(skill_path: Path) -> Optional[Dict]:
@@ -117,14 +117,13 @@ def parse_frontmatter(skill_path: Path) -> Optional[Dict]:
     }
 
 
-def scan_skills_dir(skills_dir: Path, scope: str, path_prefix: str) -> List[Dict]:
+def scan_skills_dir(skills_dir: Path, path_prefix: str) -> List[Dict]:
     """
     Scan a skill directory and extract frontmatter.
 
     Args:
         skills_dir: Path to the skills directory to scan
-        scope: "global" or "local" - used for labeling
-        path_prefix: Path prefix for display (e.g., ".claude/skills" or "~/.claude/skills")
+        path_prefix: Path prefix for display (e.g., ".claude/skills")
 
     Returns:
         List of skill dicts sorted by name
@@ -147,21 +146,43 @@ def scan_skills_dir(skills_dir: Path, scope: str, path_prefix: str) -> List[Dict
 
         skill_data = parse_frontmatter(skill_file)
         if skill_data:
-            skill_data["scope"] = scope
             skill_data["path_prefix"] = path_prefix
             skills.append(skill_data)
 
     return sorted(skills, key=lambda s: s["name"])
 
 
-def generate_index(global_skills: List[Dict], local_skills: List[Dict], include_global: bool = False) -> str:
+def generate_global_index(skills: List[Dict]) -> str:
     """
-    Generate the markdown index section with skills grouped by scope.
+    Generate the index section for global.md (Kiro format).
 
     Args:
-        global_skills: List of global skill dicts
-        local_skills: List of local skill dicts
-        include_global: Whether global skills were requested (affects output format)
+        skills: List of skill dicts
+
+    Returns:
+        Formatted string matching global.md format
+    """
+    lines = [
+        INDEX_START,
+        "*(Auto-generated - do not edit manually)*",
+        "",
+    ]
+
+    for skill in skills:
+        lines.append(f"  path: {skill['path_prefix']}/{skill['folder']}")
+        lines.append(f"  name: {skill['name']}")
+        lines.append(f"  description: {skill['description']}")
+        lines.append("---")
+
+    return "\n".join(lines)
+
+
+def generate_local_index(skills: List[Dict]) -> str:
+    """
+    Generate the index section for AGENTS.md (markdown format).
+
+    Args:
+        skills: List of local skill dicts
 
     Returns:
         Formatted markdown string
@@ -172,74 +193,132 @@ def generate_index(global_skills: List[Dict], local_skills: List[Dict], include_
         "",
     ]
 
-    # Global skills section (only if present)
-    if global_skills:
-        lines.append("### Global Skills")
-        lines.append("*Available across all repositories*")
+    for skill in skills:
+        lines.append(f"- **Name:** `{skill['name']}`")
+        lines.append(f"  - **Trigger:** {skill['description']}")
+        lines.append(f"  - **Path:** `{skill['path_prefix']}/{skill['folder']}/SKILL.md`")
         lines.append("")
-        for skill in global_skills:
-            lines.append(f"- **Name:** `{skill['name']}`")
-            lines.append(f"  - **Trigger:** {skill['description']}")
-            lines.append(f"  - **Path:** `{skill['path_prefix']}/{skill['folder']}/SKILL.md`")
-            lines.append("")
-
-    # Local skills section
-    if local_skills:
-        # Only show section header if we also have global skills
-        if global_skills:
-            lines.append("### Local Skills")
-            lines.append("*Specific to this repository*")
-            lines.append("")
-        for skill in local_skills:
-            lines.append(f"- **Name:** `{skill['name']}`")
-            lines.append(f"  - **Trigger:** {skill['description']}")
-            lines.append(f"  - **Path:** `{skill['path_prefix']}/{skill['folder']}/SKILL.md`")
-            lines.append("")
 
     return "\n".join(lines)
 
 
-def update_agents_md(new_index: str, dry_run: bool = False) -> bool:
+def update_file_index(file_path: Path, new_index: str, dry_run: bool = False) -> bool:
     """
-    Update the index section in AGENTS.md.
+    Update the index section in a file.
 
     Args:
+        file_path: Path to the file to update
         new_index: New index content to insert
         dry_run: If True, print changes without writing
 
     Returns:
         True if successful, False otherwise
     """
-    if not AGENTS_MD.exists():
-        print(f"Error: {AGENTS_MD} not found", file=sys.stderr)
+    if not file_path.exists():
+        print(f"Error: {file_path} not found", file=sys.stderr)
         return False
 
-    content = AGENTS_MD.read_text(encoding="utf-8")
+    content = file_path.read_text(encoding="utf-8")
 
     # Find the index section
     start_match = re.search(rf"^{re.escape(INDEX_START)}.*$", content, re.MULTILINE)
     if not start_match:
-        print(f"Error: '{INDEX_START}' header not found in {AGENTS_MD}", file=sys.stderr)
+        print(f"Error: '{INDEX_START}' header not found in {file_path}", file=sys.stderr)
         print(f"  Tip: Add this line to your file: {INDEX_START}", file=sys.stderr)
         return False
 
-    # Find the next --- after the index (or end of file)
-    end_match = re.search(rf"^{re.escape(INDEX_END)}\s*$", content[start_match.start():], re.MULTILINE)
-    if end_match:
-        end_pos = start_match.start() + end_match.start()
-        new_content = content[:start_match.start()] + new_index + "\n" + content[end_pos:]
+    # Find where the index section ends
+    # The index contains skill entries. For global.md each ends with ---.
+    # The section ends when we hit content that's not part of a skill entry.
+    
+    remaining_content = content[start_match.start():]
+    lines = remaining_content.split('\n')
+    
+    end_char_pos = len(content)  # Default: replace to end of file
+    current_pos = start_match.start()
+    found_first_skill = False
+    
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        line_start_pos = current_pos
+        current_pos += len(line) + 1  # +1 for newline
+        stripped = line.strip()
+        
+        # Skip header and auto-generated comment
+        if i == 0 or stripped.startswith('*(Auto-generated') or stripped.startswith('_This index'):
+            i += 1
+            continue
+        
+        # Empty lines are ok within the index
+        if stripped == '':
+            i += 1
+            continue
+            
+        # Skill entry indicators
+        is_skill_content = (
+            stripped.startswith('path:') or
+            stripped.startswith('name:') or
+            stripped.startswith('description:') or
+            stripped.startswith('- **Name:**') or
+            stripped.startswith('- **Trigger:**') or
+            stripped.startswith('- **Path:**')
+        )
+        
+        if is_skill_content:
+            found_first_skill = True
+            i += 1
+            continue
+        
+        # --- separator within the index (between skills)
+        if stripped == '---':
+            # Check what comes after this separator
+            j = i + 1
+            while j < len(lines) and lines[j].strip() == '':
+                j += 1
+            
+            if j >= len(lines):
+                # EOF after ---, this is the end
+                end_char_pos = line_start_pos
+                break
+            
+            next_content = lines[j].strip()
+            is_next_skill = (
+                next_content.startswith('path:') or
+                next_content.startswith('name:') or
+                next_content.startswith('- **Name:**')
+            )
+            
+            if is_next_skill:
+                # More skills follow, continue
+                i += 1
+                continue
+            else:
+                # Non-skill content after ---, index ends here
+                end_char_pos = line_start_pos
+                break
+        
+        # Any other content means end of index
+        if found_first_skill:
+            end_char_pos = line_start_pos
+            break
+        
+        i += 1
+    
+    # Build new content
+    remaining = content[end_char_pos:].lstrip('\n').lstrip('-').lstrip('\n')
+    if remaining:
+        new_content = content[:start_match.start()] + new_index + "\n\n" + remaining
     else:
-        # No closing marker found - append to end of index section
-        print(f"  Note: No closing '---' marker found. Appending index to end of section.")
-        new_content = content[:start_match.start()] + new_index + "\n---\n"
+        new_content = content[:start_match.start()] + new_index + "\n"
 
     if dry_run:
-        print("\n=== DRY RUN: Would write ===")
+        print(f"\n=== DRY RUN: Would write to {file_path} ===")
         print(new_index)
         print("=== END ===\n")
         return True
 
-    AGENTS_MD.write_text(new_content, encoding="utf-8")
+    file_path.write_text(new_content, encoding="utf-8")
     return True
 
 
@@ -253,22 +332,22 @@ This file documents the agents and skills available in this repository.
 """
 
 
-def init_agents_md(dry_run: bool = False) -> bool:
+def init_agents_md(file_path: Path, dry_run: bool = False) -> bool:
     """Create AGENTS.md with default template."""
     if dry_run:
-        print(f"\n=== DRY RUN: Would create {AGENTS_MD} ===")
+        print(f"\n=== DRY RUN: Would create {file_path} ===")
         print(AGENTS_MD_TEMPLATE)
         print("=== END ===\n")
         return True
     
-    AGENTS_MD.write_text(AGENTS_MD_TEMPLATE, encoding="utf-8")
-    print(f"Created: {AGENTS_MD}")
+    file_path.write_text(AGENTS_MD_TEMPLATE, encoding="utf-8")
+    print(f"Created: {file_path}")
     return True
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Update the skill index in AGENTS.md (scans both global and local skills)"
+        description="Update skill indexes (global.md and AGENTS.md)"
     )
     parser.add_argument(
         "--dry-run", "-n",
@@ -278,75 +357,110 @@ def main():
     parser.add_argument(
         "--init",
         action="store_true",
-        help="Create AGENTS.md if it doesn't exist (auto-prompted if missing)"
+        help="Create AGENTS.md if it doesn't exist"
     )
     args = parser.parse_args()
 
-    # Check we're in a repo
-    if not REPO_ROOT:
-        print("Error: Not in a git repository. Run from within a repo.", file=sys.stderr)
-        sys.exit(1)
+    in_home = is_home_directory()
+    repo_root = find_repo_root()
+    
+    # Determine what to update
+    update_global = True  # Always update global skills
+    update_local = not in_home and repo_root is not None
+    
+    print(f"Working directory: {Path.cwd()}")
+    print(f"Home directory: {HOME_DIR}")
+    print(f"In home directory: {in_home}")
+    if repo_root:
+        print(f"Repository root: {repo_root}")
+    print()
 
-    # Auto-initialize AGENTS.md if missing
-    if not AGENTS_MD.exists():
-        if args.init:
-            if not init_agents_md(args.dry_run):
-                sys.exit(1)
-        else:
-            print(f"AGENTS.md not found at: {AGENTS_MD}")
-            response = input("Create it now? [Y/n]: ").strip().lower()
-            if response in ("", "y", "yes"):
-                if not init_agents_md(args.dry_run):
-                    sys.exit(1)
-            else:
-                print("Aborted. Run with --init to create automatically.")
-                sys.exit(1)
-
-    # Determine whether to include global skills
-    # ALWAYS prompt the user - NO FLAGS can bypass this (prevents AI agents from running unattended)
-    print("\n" + "="*60)
-    response = input("Include global skills from ~/.claude/skills/? [y/N]: ").strip().lower()
-    print("="*60 + "\n")
-    include_global = response in ("y", "yes")
-
-    # Scan global skills (only if user confirmed)
-    global_skills = []
-    if include_global:
-        print(f"Scanning global skills in: {GLOBAL_SKILLS_DIR}")
-        global_skills = scan_skills_dir(GLOBAL_SKILLS_DIR, "global", GLOBAL_SKILLS_PATH_PREFIX)
-        print(f"  Found {len(global_skills)} global skills")
-    else:
-        print("Skipping global skills (user declined)")
-
-    # Scan local skills
-    print(f"Scanning local skills in: {LOCAL_SKILLS_DIR}")
-    local_skills = scan_skills_dir(LOCAL_SKILLS_DIR, "local", LOCAL_SKILLS_PATH_PREFIX)
-    print(f"  Found {len(local_skills)} local skills")
-
-    total_skills = len(global_skills) + len(local_skills)
-    if total_skills == 0:
-        print("No skills found!", file=sys.stderr)
-        sys.exit(1)
-
-    print(f"\nTotal: {total_skills} skills")
+    # === Update global skills in global.md ===
+    print("=" * 60)
+    print("GLOBAL SKILLS")
+    print("=" * 60)
+    
+    print(f"Scanning global skills in: {GLOBAL_SKILLS_DIR}")
+    global_skills = scan_skills_dir(GLOBAL_SKILLS_DIR, "~/.claude/skills")
+    print(f"  Found {len(global_skills)} global skills")
+    
     if global_skills:
-        print("  Global:")
+        print("\n  Skills found:")
         for s in global_skills:
             print(f"    - {s['name']} ({s['folder']})")
-    if local_skills:
-        print("  Local:")
-        for s in local_skills:
-            print(f"    - {s['name']} ({s['folder']})")
-
-    new_index = generate_index(global_skills, local_skills, include_global=include_global)
-
-    if update_agents_md(new_index, dry_run=args.dry_run):
-        if args.dry_run:
-            print("\nDry run complete. No changes made.")
+        
+        global_index = generate_global_index(global_skills)
+        
+        if GLOBAL_MD.exists():
+            if update_file_index(GLOBAL_MD, global_index, dry_run=args.dry_run):
+                if not args.dry_run:
+                    print(f"\nUpdated: {GLOBAL_MD}")
+            else:
+                print(f"\nFailed to update: {GLOBAL_MD}", file=sys.stderr)
         else:
-            print(f"\nUpdated: {AGENTS_MD}")
+            print(f"\nWarning: {GLOBAL_MD} not found. Skipping global index update.", file=sys.stderr)
     else:
-        sys.exit(1)
+        print("\nNo global skills found.")
+
+    # === Update local skills in AGENTS.md (only if not in home directory) ===
+    if update_local:
+        print()
+        print("=" * 60)
+        print("LOCAL SKILLS")
+        print("=" * 60)
+        
+        local_skills_dir = repo_root / ".claude" / "skills"
+        agents_md = repo_root / "AGENTS.md"
+        
+        print(f"Scanning local skills in: {local_skills_dir}")
+        local_skills = scan_skills_dir(local_skills_dir, ".claude/skills")
+        print(f"  Found {len(local_skills)} local skills")
+        
+        if local_skills:
+            print("\n  Skills found:")
+            for s in local_skills:
+                print(f"    - {s['name']} ({s['folder']})")
+            
+            local_index = generate_local_index(local_skills)
+            
+            # Check if AGENTS.md exists, offer to create if not
+            if not agents_md.exists():
+                if args.init:
+                    if not init_agents_md(agents_md, args.dry_run):
+                        sys.exit(1)
+                else:
+                    print(f"\nAGENTS.md not found at: {agents_md}")
+                    response = input("Create it now? [Y/n]: ").strip().lower()
+                    if response in ("", "y", "yes"):
+                        if not init_agents_md(agents_md, args.dry_run):
+                            sys.exit(1)
+                    else:
+                        print("Skipping local skills index update.")
+                        return
+            
+            if agents_md.exists():
+                if update_file_index(agents_md, local_index, dry_run=args.dry_run):
+                    if not args.dry_run:
+                        print(f"\nUpdated: {agents_md}")
+                else:
+                    print(f"\nFailed to update: {agents_md}", file=sys.stderr)
+        else:
+            print("\nNo local skills found.")
+    else:
+        if in_home:
+            print("\nSkipping local skills (working from home directory - no local skills exist)")
+        elif not repo_root:
+            print("\nSkipping local skills (not in a git repository)")
+
+    # Summary
+    print()
+    print("=" * 60)
+    print("SUMMARY")
+    print("=" * 60)
+    if args.dry_run:
+        print("Dry run complete. No changes made.")
+    else:
+        print("Index update complete.")
 
 
 if __name__ == "__main__":

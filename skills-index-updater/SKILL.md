@@ -1,146 +1,164 @@
 ---
 name: skills-index-updater
-description: Regenerate the Available Skill Index in AGENTS.md for IDEs without native skill support (Kiro, Gemini, etc.). ONLY use when the user EXPLICITLY asks to "update skill index", "sync agents", "regenerate index", or "update AGENTS.md". Do NOT auto-invoke after creating/modifying skills - Claude Code has native skill support and does not need this.
+description: Regenerate skill indexes for IDEs without native skill support (Kiro, Gemini, etc.). ONLY use when the user EXPLICITLY asks to "update skill index", "sync agents", "regenerate index", or "update AGENTS.md". Do NOT auto-invoke after creating/modifying skills - Claude Code has native skill support and does not need this.
 ---
 
-# Skill Index Updater
+# Skill index updater
 
-Automatically regenerate the "Available Skill Index" section in `AGENTS.md` by scanning both global and local skills.
+Automatically regenerate skill indexes by scanning skill directories and updating:
+- **Global skills** → `~/.kiro/steering/global.md` (always updated)
+- **Local skills** → `AGENTS.md` in the repo (only when NOT in home directory)
 
 ---
 
-> **⚠️ STOP: Check Before Running**
+> **⚠️ STOP: Check before running**
 >
 > This skill is **ONLY for IDEs without native skill support** (Kiro, Gemini, Cursor, etc.).
 >
 > **Claude Code users:** You do NOT need this - Claude Code has native skill indexing built-in.
 >
-> Only run if the user **explicitly** asked to update AGENTS.md for compatibility with other tools.
+> Only run if the user **explicitly** asked to update skill indexes for compatibility with other tools.
 
 ---
 
-## Quick Start
+## Quick start
 
 ```bash
-# Run from any repo - ALWAYS prompts for user confirmation
+# Run from any location
 python3 ~/.claude/skills/skills-index-updater/scripts/update_skill_index.py
+
+# Preview changes without writing
+python3 ~/.claude/skills/skills-index-updater/scripts/update_skill_index.py --dry-run
 ```
 
 ## Prerequisites
 
 - Python 3.8+
-- PyYAML package (`pip install pyyaml`)
-- Must be run from within a git repository
-- Repository must have an `AGENTS.md` file with `## Available Skills Index` section
+- PyYAML package (`pip install pyyaml`) - optional, falls back to regex parsing
+- `~/.kiro/steering/global.md` must exist with `## Available Skills Index` section
 
 ---
 
-## How It Works
+## How it works
 
-The script scans skills from **two locations**:
+The script automatically determines what to update based on your current location:
 
-| Location | Scope | Included By Default? |
-|----------|-------|---------------------|
-| `./.claude/skills/` | Local | ✅ Always |
-| `~/.claude/skills/` | Global | ❌ Only if opted-in |
+| Location | Global skills | Local skills |
+|----------|---------------|--------------|
+| Home directory (`~/`) | ✅ Updated in `global.md` | ⏭️ Skipped (none exist) |
+| Any repo | ✅ Updated in `global.md` | ✅ Updated in `AGENTS.md` |
+| Outside a repo | ✅ Updated in `global.md` | ⏭️ Skipped (no repo found) |
 
-### Interactive Mode (Default)
+### Skill locations
 
-When run without flags, the script will **always** prompt:
+| Location | Scope | Output file |
+|----------|-------|-------------|
+| `~/.claude/skills/` | Global | `~/.kiro/steering/global.md` |
+| `./.claude/skills/` | Local | `AGENTS.md` in repo root |
 
-```
-============================================================
-Would you like to include global skills as well? [y/N]: 
-============================================================
-```
-
-- Press **Enter** or type **n** → Local-only mode (recommended for open-source repos)
-- Type **y** → Include global skills (for personal/private repos)
-
-> **There is NO flag to bypass this prompt.** This is intentional to prevent AI agents from running unattended.
-
-### Available Flags
+### Available flags
 
 | Flag | Short | Behavior |
 |------|-------|----------|
 | `--dry-run` | `-n` | Show changes without writing |
-| `--init` | | Create AGENTS.md if missing |
-
-> **Why require confirmation?** Open-source repositories should only reference skills that exist in the repo itself. Users who clone your repo won't have access to your personal global skills. The prompt ensures a human makes this decision.
-
-### AI Agent Behavior
-
-AI agents **CAN** run this script directly in the terminal:
-- **DO** run the script with `isBackground=false` so the user sees the interactive prompt
-- **DO** let the user respond to the prompt themselves (y/N for including global skills)
-- **NEVER** use `echo "y" |`, `yes |`, heredocs, or any stdin piping to bypass the prompt
-- **NEVER** assume what the user wants—let them choose
-
-**Correct behavior:**
-```bash
-python3 ~/.claude/skills/skills-index-updater/scripts/update_skill_index.py
-```
-
-The script will prompt the user interactively. Let them decide whether to include global skills.
+| `--init` | | Create AGENTS.md if missing (auto-prompted otherwise) |
 
 ---
 
 ## Workflow
 
-### 1. Run the Update Script
+### 1. Run the update script
 
 ```bash
-cd /path/to/repo
 python3 ~/.claude/skills/skills-index-updater/scripts/update_skill_index.py
 ```
 
 The script will:
-1. Find the repo root (looks for `.git` directory)
-2. **Prompt:** "Would you like to include global skills as well?"
-3. Scan local skills in `.claude/skills/`
-4. Scan global skills in `~/.claude/skills/` (only if user said yes)
-5. Parse YAML frontmatter from each `SKILL.md`
-6. Regenerate the index section in `AGENTS.md`
+1. Detect your working directory and whether you're in a git repo
+2. Scan global skills in `~/.claude/skills/`
+3. Update `~/.kiro/steering/global.md` with global skills index
+4. If in a repo (and not in home directory):
+   - Scan local skills in `.claude/skills/`
+   - Update `AGENTS.md` with local skills index
 
-> [!TIP]
-> Run this script after creating, deleting, or modifying any skill.
-
-### 2. Verify Output
+### 2. Verify output
 
 ```bash
+# Check global.md update
+grep -A 20 "## Available Skills Index" ~/.kiro/steering/global.md
+
+# Check AGENTS.md update (if in a repo)
 grep -A 10 "## Available Skills Index" AGENTS.md
 ```
 
-- [ ] Global skills appear under "### Global Skills"
-- [ ] Local skills appear under "### Local Skills"
-- [ ] No duplicate entries
-- [ ] Descriptions match current SKILL.md frontmatter
+---
+
+## Example output
+
+```
+Working directory: /Users/you/projects/my-repo
+Home directory: /Users/you
+In home directory: False
+Repository root: /Users/you/projects/my-repo
+
+============================================================
+GLOBAL SKILLS
+============================================================
+Scanning global skills in: /Users/you/.claude/skills
+  Found 5 global skills
+
+  Skills found:
+    - skill-builder (skill-builder)
+    - skills-index-updater (skills-index-updater)
+    - save-context (save-context)
+    - humanize (humanize)
+    - docx (docx)
+
+Updated: /Users/you/.kiro/steering/global.md
+
+============================================================
+LOCAL SKILLS
+============================================================
+Scanning local skills in: /Users/you/projects/my-repo/.claude/skills
+  Found 2 local skills
+
+  Skills found:
+    - extract-videos (extract-videos)
+    - download-transcripts (download-transcripts)
+
+Updated: /Users/you/projects/my-repo/AGENTS.md
+
+============================================================
+SUMMARY
+============================================================
+Index update complete.
+```
 
 ---
 
-## Example Output
+## Output formats
 
-**Local-only mode (default):**
+### Global skills (in global.md)
+
 ```
-Include global skills from ~/.claude/skills/? [y/N]: 
-Skipping global skills (local-only mode)
-Scanning local skills in: /path/to/repo/.claude/skills
-  Found 5 local skills
+## Available Skills Index
+*(Auto-generated - do not edit manually)*
 
-Total: 5 skills
-  Local:
-    - extract-videos (extract-videos)
-    - download-transcripts (download-transcripts)
-    - graphrag-knowledge (graphrag-knowledge-extraction)
-    - prep-1to1 (preparing-1to1-meetings)
-    - querying-graphrag (graphrag-querying)
-
-Updated: /path/to/repo/AGENTS.md
+  path: .claude/skills/skill-builder
+  name: skill-builder
+  description: Create, evaluate, and improve Agent skills...
+---
+  path: .claude/skills/humanize
+  name: humanize
+  description: Convert AI-written text to more human-like writing...
+---
 ```
 
-**Generated index (local-only):**
+### Local skills (in AGENTS.md)
+
 ```markdown
 ## Available Skills Index
+_This index is for IDEs that don't natively support skills (e.g., Gemini CLI, Kiro). Skip if your IDE reads SKILL.md directly._
 
 - **Name:** `extract-videos`
   - **Trigger:** Extract video URLs from various sources...
@@ -151,51 +169,13 @@ Updated: /path/to/repo/AGENTS.md
   - **Path:** `.claude/skills/download-transcripts/SKILL.md`
 ```
 
-**With global skills (--include-global):**
-```
-Scanning global skills in: /Users/you/.claude/skills
-  Found 2 global skills
-Scanning local skills in: /path/to/repo/.claude/skills
-  Found 5 local skills
-
-Total: 7 skills
-  Global:
-    - skill-builder (skill-builder)
-    - skills-index-updater (skills-index-updater)
-  Local:
-    - extract-videos (extract-videos)
-    ...
-
-Updated: /path/to/repo/AGENTS.md
-```
-
-**Generated index (with global):**
-```markdown
-## Available Skills Index
-*(Auto-generated by skills-index-updater SKILL - do not edit manually)*
-
-### Global Skills
-*Available across all repositories*
-
-- **Name:** `skill-builder`
-  - **Trigger:** Create, evaluate, and improve Agent skills...
-  - **Path:** `~/.claude/skills/skill-builder/SKILL.md`
-
-### Local Skills
-*Specific to this repository*
-
-- **Name:** `extract-videos`
-  - **Trigger:** Extract video URLs from various sources...
-  - **Path:** `.claude/skills/extract-videos/SKILL.md`
-```
-
 ---
 
-## Quality Rules
+## Quality rules
 
-- **Descriptions come from frontmatter** — Never manually edit the index
-- **Paths show scope** — Global uses `~/.claude/skills/`, local uses `.claude/skills/`
-- **Run after every skill change** — Create, delete, or modify triggers update
+- **Descriptions come from frontmatter** - Never manually edit the index
+- **Global and local are separate** - Each goes to its own file
+- **Run after every skill change** - Create, delete, or modify triggers update
 
 ---
 
@@ -203,14 +183,14 @@ Updated: /path/to/repo/AGENTS.md
 
 | Problem | Cause | Solution |
 |---------|-------|----------|
-| "Not in a git repository" | Script run outside repo | `cd` to a git repo first |
+| "global.md not found" | Missing Kiro config | Create `~/.kiro/steering/global.md` with index section |
 | Skill not appearing | Missing frontmatter | Add `name:` and `description:` to SKILL.md |
 | YAML parse error | Invalid frontmatter syntax | Check for tabs, missing colons |
-| Index section not found | Missing marker in AGENTS.md | Add `## Available Skills Index` section |
-| Global skills missing | No `~/.claude/skills/` | Create the directory or ignore if no global skills |
+| Index section not found | Missing marker | Add `## Available Skills Index` section |
+| Local skills skipped | Working from ~/ | This is expected - no local skills in home directory |
 
 ---
 
-## Additional Resources
+## Additional resources
 
-- **[TESTING.md](TESTING.md)** — Evaluation scenarios and validation commands
+- **[TESTING.md](TESTING.md)** - Evaluation scenarios and validation commands

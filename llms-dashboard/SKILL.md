@@ -1,6 +1,6 @@
 ---
 name: llms-dashboard
-description: Generate and update HTML dashboards for LLM usage (Claude and Gemini). Use when the user wants to visualize their AI coding assistant usage statistics, view metrics in a web interface, or analyze historical trends.
+description: Generate and update HTML dashboards for LLM usage (Claude, Gemini, Kiro, VS code, Cline, etc). Use when the user wants to visualize their AI coding assistant usage statistics, view metrics in a web interface, or analyze historical trends.
 ---
 
 # LLMs Dashboard Generator

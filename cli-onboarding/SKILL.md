@@ -1,3 +1,8 @@
+---
+name: cli-onboarding
+description: "Production-ready first-time user experience patterns for CLI tools including setup wizards, first-run detection, doctor/diagnostic commands, actionable error messages, edge case handling, and update notifications. When building CLI packages that need: (1) Interactive setup commands, (2) Configuration validation, (3) Onboarding flows for new users, (4) Publishing preparation, or any CLI UX improvements"
+---
+
 # CLI Onboarding & First-Time User Experience
 
 Implement production-ready first-time user experience for CLI packages. Use when the user asks to add setup wizards, improve onboarding, handle edge cases, or prepare a CLI for publication.
