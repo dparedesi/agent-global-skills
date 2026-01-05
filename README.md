@@ -1,54 +1,62 @@
-# Claude Global Skills
+# Claude Code Skills
 
-Global skills available across all repositories.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Quick Start
+<a href="https://buymeacoffee.com/dparedesi" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="50"></a>
 
-After cloning/moving to `~/.claude/skills/`, run the setup script to create a backward-compatible symlink at `~/.agent/skills/`:
 
-```bash
-cd ~/.claude/skills
-chmod +x setup.sh
-./setup.sh
-```
+A personal collection of skills for [Claude Code](https://claude.com/claude-code) - modular, prompt-based workflows that extend Claude's capabilities for specific tasks.
 
-## What the setup does
+## What are Skills?
 
-The setup script creates a symbolic link:
-
-```
-~/.agent/skills/ → ~/.claude/skills/
-```
-
-This allows:
-- **Single source of truth**: All skills live in `~/.claude/skills/`
-- **Backward compatibility**: Skills remain accessible from `~/.agent/skills/` for older configurations
+Skills are reusable prompts that Claude Code automatically discovers and activates based on keyword triggers. Each skill lives in its own directory with a `SKILL.md` file containing YAML frontmatter (name, description) and detailed instructions.
 
 ## Available Skills
 
-- **cli-onboarding/** - First-time user experience for CLI packages (setup wizards, edge cases, validation)
-- **commit-and-push/** - Automates git commit and push operations
-- **elevate-code/** - Framework to transform code to production quality using 12 patterns
-- **humanize/** - Convert AI-written text to human-like writing
-- **inbox-assistant/** - AI-powered tool for managing and triaging Gmail inboxes
-- **llms-dashboard/** - Generate dashboards to visualize LLM usage statistics
-- **save-context/** - Save current session context for agent handoffs or pausing work
-- **skill-builder/** - Create, evaluate, and scaffold new Agent skills
-- **skills-index-updater/** - Regenerate the skill index for AGENTS.md
-- **skills-local-setup/** - Set up symlinks for multi-agent compatibility (Claude, Gemini, etc.)
-- **transcribe/** - Transcribe audio files with speaker diarization using VoxScriber
+| Skill | Description | Trigger Examples |
+|-------|-------------|------------------|
+| **commit-and-push** | Streamlined git workflow - analyzes changes, creates commit message, pushes, optionally creates PR | `/commit-and-push` |
+| **elevate-code** | Transform projects to production quality using 12 proven patterns | "elevate-code", "production ready", "make it production grade" |
+| **humanize** | Make AI-written text read more naturally through targeted edits | "humanize", "sounds robotic", "make it natural" |
+| **inbox-assistant** | AI-powered Gmail management - triage, cleanup, and batch operations | "inbox", "email triage", "clean inbox" |
+| **llms-dashboard** | Generate HTML dashboards for AI tool usage statistics | "visualize AI usage", "usage statistics" |
+| **save-context** | Generate session handoff documents for agent continuity | "save context", "handoff", "wrap up" |
+| **skill-builder** | Create, evaluate, and improve skills to production quality | "create a new skill", "review skill" |
+| **skill-feedback** | Capture session learnings for skill/package improvements | "skill-feedback", "capture improvements" |
+| **skills-index-updater** | Regenerate AGENTS.md for IDEs without native skill support | "update skill index", "sync agents" |
+| **skills-local-setup** | Create symlinks for multi-agent compatibility in repos | "setup skills", "configure agents" |
+| **transcribe** | Transcribe audio with speaker diarization using VoxScriber | "transcribe", "meeting transcript" |
+| **cli-onboarding** | Patterns for CLI first-time user experience (setup wizards, doctor commands) | "onboarding", "setup wizard" |
 
-## Manual Setup (Alternative)
+## Skill Structure
 
-If you prefer to set up manually:
+Each skill follows a consistent pattern:
 
-```bash
-# Ensure .agent directory exists
-mkdir -p ~/.agent
-
-# Remove existing skills directory if needed
-# rm -rf ~/.agent/skills
-
-# Create symlink
-ln -s ~/.claude/skills ~/.agent/skills
 ```
+skill-name/
+├── SKILL.md          # Main entry point with YAML frontmatter
+├── REFERENCE.md      # (optional) Lookup tables, patterns
+├── EXAMPLES.md       # (optional) Before/after comparisons
+└── scripts/          # (optional) Supporting scripts
+```
+
+## Usage
+
+Skills are invoked automatically when your request matches their trigger keywords, or explicitly via slash command:
+
+```
+/commit-and-push
+/elevate-code
+/humanize
+```
+
+## Design Principles
+
+- **Progressive Disclosure** - SKILL.md is the entry point; complexity lives in supporting files
+- **Actionable Outputs** - Skills produce concrete results, not just information
+- **Safety by Default** - Destructive operations require confirmation
+- **Undo Capability** - Where applicable, operations can be reversed
+
+## Other AI Tools
+
+For AI IDE/CLIs without native skill support (Gemini/Antigravity, Kiro, etc.), run `/skills-local-setup` to create compatibility symlinks in your repository.
