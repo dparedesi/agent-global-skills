@@ -397,58 +397,46 @@ Can you understand what this skill does in 10 seconds? Does it embed domain expe
 > A skill should contain all its workflow steps directly, not delegate to other skills. If you find your skill calling another skill mid-workflow, either merge them (if tightly coupled) or rethink the boundaries. One skill = one self-contained capability.
 
 > [!TIP]
-> **Domain Expertise: Reference vs Procedural**
-> State-of-the-art skills embed TWO types of expert knowledge:
-> 
-> | Type | What it is | Example |
-> |------|------------|---------|
-> | **Reference** | Domain facts, definitions, lookup tables | "Here are all the categories and their definitions" |
-> | **Procedural** | How to apply knowledge in ambiguous situations | "If X could be category A or B, ask this question to decide" |
-> 
-> **Reference alone is not enough.** A skill with comprehensive reference material but no procedural guidance leaves users to figure out the hard parts themselves. State-of-the-art means the skill knows HOW to apply its knowledge, not just WHAT the knowledge is.
+> **Domain Expertise**
+> State-of-the-art skills embed expert knowledge that a generic AI wouldn't have—procedural know-how, quality checklists, professional templates, and domain best practices. The skill should perform tasks at a specialist level, not a generalist one.
 
 ---
 
-## Efficacy Category 2: Decision Density (20 points)
+## Efficacy Category 2: Decision Density (25 points)
 
-At every decision point, is guidance unambiguous? Does it handle ambiguous cases?
+At every decision point, is guidance unambiguous?
 
 | Points | Criteria |
 |--------|----------|
 | 0 | Constant "use judgment" with no criteria |
-| 6 | Some decision points have criteria, others don't |
-| 12 | Most decisions have if/then guidance, few gaps |
-| 16 | All decisions have explicit criteria and thresholds |
-| 20 | Decisions are so clear they could be automated, **including disambiguation for overlapping cases** |
+| 8 | Some decision points have criteria, others don't |
+| 15 | Most decisions have if/then guidance, few gaps |
+| 20 | All decisions have explicit criteria and thresholds |
+| 25 | Decisions are so clear they could be automated |
 
 **What to look for:**
 - Explicit thresholds (e.g., "if overlap > 70%, DEEPEN")
 - Decision tables with clear conditions
 - No ambiguous phrases like "when appropriate" without criteria
-- **Disambiguation logic for cases that match multiple options**
 
 **Anti-patterns:**
 - "Use your best judgment"
 - "If it seems right, proceed"
 - "Consider whether..." (without saying what to conclude)
-- **Lookup table without disambiguation** (what if input matches multiple entries?)
-
-> [!IMPORTANT]
-> **Lookup tables ≠ Decision logic.** A reference table that maps inputs to outputs is passive. State-of-the-art skills include active disambiguation: "If X could be A or B, ask [question] to determine which."
 
 ---
 
-## Efficacy Category 3: Minimalism (15 points)
+## Efficacy Category 3: Minimalism (20 points)
 
 Does every section earn its place? Could it be simpler?
 
 | Points | Criteria |
 |--------|----------|
 | 0 | Massive over-documentation, 3x longer than needed |
-| 4 | Significant filler, many sections could be cut |
-| 8 | Some redundancy, 20-30% could be removed |
-| 12 | Lean but complete, minor trimming possible |
-| 15 | Every word earns its place; couldn't be shorter without loss |
+| 5 | Significant filler, many sections could be cut |
+| 10 | Some redundancy, 20-30% could be removed |
+| 15 | Lean but complete, minor trimming possible |
+| 20 | Every word earns its place; couldn't be shorter without loss |
 
 **The Simplicity Test:**
 1. Could this skill be 50% shorter and still work? → Major minimalism problem
@@ -463,60 +451,28 @@ Does every section earn its place? Could it be simpler?
 
 ---
 
-## Efficacy Category 4: Calibration (10 points)
-
-Does output vary appropriately based on input context?
-
-| Points | Criteria |
-|--------|----------|
-| 0 | One-size-fits-all output regardless of context |
-| 3 | Acknowledges context matters but no guidance |
-| 6 | Some calibration guidance but incomplete |
-| 8 | Clear calibration for main context dimensions |
-| 10 | Comprehensive calibration with matrices/tables for all relevant dimensions |
-
-**Context dimensions to consider:**
-- **Evidence strength**: How confident should claims be based on input quality?
-- **User level/role**: Should output differ for junior vs senior, peer vs manager?
-- **Scope/scale**: Does output adjust for small vs large, local vs global?
-- **Formality**: Should tone vary by audience or purpose?
-
-**Calibration pattern:**
-```markdown
-| Context | Output Adjustment |
-|---------|-------------------|
-| Strong evidence | "excels at", "consistently demonstrates" |
-| Moderate evidence | "demonstrates", "shows" |
-| Limited evidence | "has shown", "is developing" |
-```
-
-> [!TIP]
-> **Don't overclaim.** A skill that always uses superlatives regardless of input quality undermines credibility. Match output intensity to input strength.
-
----
-
-## Efficacy Category 5: Autonomy (10 points)
+## Efficacy Category 4: Autonomy (15 points)
 
 Can it run with minimal user intervention?
 
 | Points | Criteria |
 |--------|----------|
 | 0 | Requires user input every 2-3 steps |
-| 3 | Frequent checkpoints, but some autonomous stretches |
-| 6 | Key checkpoints only, good autonomous flow |
-| 10 | Runs almost entirely autonomously; user only confirms final output |
+| 5 | Frequent checkpoints, but some autonomous stretches |
+| 10 | Key checkpoints only, good autonomous flow |
+| 15 | Runs almost entirely autonomously; user only confirms final output |
 
 **Autonomy spectrum:**
-- **High autonomy**: "Run this, get output"
-- **Balanced**: "Gather input → Process autonomously → Confirm output"
+- **High autonomy**: "Run this, get output" (e.g., skill-index-updater)
+- **Balanced**: "Gather input → Process autonomously → Confirm output" (e.g., graphrag-extraction)
 - **Low autonomy**: "Ask user → Do one thing → Ask user again" (may be intentional)
 
 > [!NOTE]
-> Some skills *should* have low autonomy (e.g., skills requiring clarification). Score based on whether the autonomy level is appropriate for the task.
+> Some skills *should* have low autonomy (e.g., vault-knowledge-processing requires clarification). Score based on whether the autonomy level is appropriate for the task.
 
 ---
 
-## Efficacy Category 6: Failure Recovery (10 points)
+## Efficacy Category 5: Failure Recovery (10 points)
 
 When things go wrong, does it help recover?
 
@@ -536,27 +492,28 @@ When things go wrong, does it help recover?
 
 ---
 
-## Efficacy Category 7: Battle-Tested (5 points)
+## Efficacy Category 6: Battle-Tested (10 points)
 
 Evidence of real usage and iteration.
 
 | Points | Criteria |
 |--------|----------|
 | 0 | Clearly theoretical, never used |
-| 2 | Appears used but no evidence of iteration |
-| 3 | Some feedback incorporated, shows evolution |
-| 4 | Clear iteration history, multiple improvements |
-| 5 | Extensively used with feedback loop; refinements visible |
+| 3 | Appears used but no evidence of iteration |
+| 6 | Some feedback incorporated, shows evolution |
+| 8 | Clear iteration history, multiple improvements |
+| 10 | Extensively used with feedback loop; refinements visible |
 
 **Evidence of battle-testing:**
 - Troubleshooting entries from real problems encountered
 - Examples using real data (not generic "foo/bar")
 - Version history showing improvements
+- Friction/enhancement entities in skillrag-feedback
 - "Common Mistakes" that came from actual mistakes
 
 ---
 
-## Efficacy Category 8: Safety & Security (10 points)
+## Efficacy Category 7: Safety & Security (10 points)
 
 Does the skill avoid unsafe actions and respect least privilege?
 
@@ -591,30 +548,23 @@ Does the skill avoid unsafe actions and respect least privilege?
 - [ ] Quick Start immediately actionable
 **Score: __/20**
 
-### Decision Density (20 points)
+### Decision Density (25 points)
 - [ ] All decision points have explicit criteria
 - [ ] Thresholds are specific (numbers, conditions)
 - [ ] No "use judgment" without guidance
-- [ ] Disambiguation logic for overlapping/ambiguous cases
-**Score: __/20**
+**Score: __/25**
 
-### Minimalism (15 points)
+### Minimalism (20 points)
 - [ ] Every section earns its place
 - [ ] No redundant explanations
 - [ ] Couldn't be shorter without loss
-**Score: __/15**
+**Score: __/20**
 
-### Calibration (10 points)
-- [ ] Output varies based on input context
-- [ ] Evidence strength affects language intensity
-- [ ] User level/role considered where relevant
-**Score: __/10**
-
-### Autonomy (10 points)
+### Autonomy (15 points)
 - [ ] Autonomy level appropriate for task
 - [ ] Checkpoints are meaningful, not excessive
 - [ ] Can run without constant hand-holding
-**Score: __/10**
+**Score: __/15**
 
 ### Failure Recovery (10 points)
 - [ ] Common failures have recovery paths
@@ -622,16 +572,10 @@ Does the skill avoid unsafe actions and respect least privilege?
 - [ ] Troubleshooting reflects real problems
 **Score: __/10**
 
-### Battle-Tested (5 points)
+### Battle-Tested (10 points)
 - [ ] Evidence of real usage
 - [ ] Examples use realistic data
 - [ ] Shows iteration and improvement
-**Score: __/5**
-
-### Safety & Security (10 points)
-- [ ] Only accesses data it needs
-- [ ] No unsafe actions without validation
-- [ ] Reviewed for misuse vectors
 **Score: __/10**
 
 ---
