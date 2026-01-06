@@ -3,3 +3,4 @@ claude-dashboard/dashboard.html
 .claude
 *.feedback
 *.backup
+annual-review-feedback/
