@@ -67,6 +67,94 @@ Use when: Heavy inbox (>30 unread), user wants thoroughness, language like "what
 
 ---
 
+## Heavy Inbox Strategy
+
+When a user has a heavy inbox (>20 unread emails), use this optimized workflow:
+
+### 1. Quick Assessment
+
+```bash
+inbox summary --json
+```
+
+Identify which account(s) have the bulk of unread emails.
+
+### 2. Group Analysis First
+
+For heavy inboxes, **always start with grouped analysis**:
+
+```bash
+inbox analyze --count 100 --account <name> --group-by sender
+```
+
+This reveals:
+- Which senders are flooding the inbox
+- Batch cleanup opportunities (all from same sender)
+- High-volume vs. low-volume senders
+
+### 3. Batch Cleanup by Sender
+
+When grouped analysis shows high-volume senders (5+ emails):
+
+| Count | Sender Pattern | Likely Action |
+|-------|----------------|---------------|
+| 10+ | linkedin.com | Job alerts - offer batch delete |
+| 5+ | newsletter@ | Newsletters - offer unsubscribe + delete |
+| 5+ | noreply@ | Notifications - review, likely safe to batch |
+| 3+ | same domain | Check if promotional or transactional |
+
+**Example workflow:**
+```
+## Inbox Analysis: work@company.com (47 unread)
+
+### High-Volume Senders:
+| Sender | Count | Likely Type |
+|--------|-------|-------------|
+| linkedin.com | 12 | Job alerts |
+| github.com | 8 | Notifications |
+| substack.com | 6 | Newsletters |
+
+### Recommendation:
+These 26 emails (55% of inbox) are recurring notifications.
+Delete all LinkedIn job alerts and old newsletters?
+```
+
+### 4. Find Stale Emails
+
+For cleanup of old emails, use server-side filtering:
+
+```bash
+inbox analyze --older-than 30d --group-by sender
+```
+
+Old emails (>30 days) are usually safe to batch delete:
+- Expired promotions
+- Delivered order notifications
+- Old newsletters
+
+### 5. Then Individual Review
+
+After batch cleanup, remaining emails are typically:
+- Direct messages from humans
+- Action items (PRs, meeting requests)
+- Transactional (receipts, confirmations)
+
+These deserve individual attention.
+
+### Decision Tree
+
+```
+Unread count?
+├── ≤5: Quick summary, list all
+├── 6-20: Analyze, offer batch actions for obvious noise
+└── >20:
+    ├── Group by sender FIRST
+    ├── Batch delete obvious noise (LinkedIn, newsletters, promos)
+    └── Then individual review of remaining
+```
+
+---
+
 ## Quick Start
 
 | Task | Command |
@@ -74,6 +162,8 @@ Use when: Heavy inbox (>30 unread), user wants thoroughness, language like "what
 | Check status | `inbox summary --json` |
 | Full triage | `inbox analyze --count 50` → classify → present |
 | Analyze by sender | `inbox analyze --count 50 --group-by sender` |
+| Find old emails | `inbox analyze --older-than 30d` |
+| Extract links from email | `inbox read --id <id> --links` |
 | Delete by ID | `inbox delete --ids "id1,id2" --confirm` |
 | Delete by sender | `inbox delete --sender "linkedin" --dry-run` → confirm → delete |
 | Delete by subject | `inbox delete --match "weekly digest" --dry-run` |
@@ -179,7 +269,12 @@ To stop: `launchctl unload ~/Library/LaunchAgents/com.yourname.inboxd.plist`
 | `inbox analyze --count 50` | Get email data for analysis | JSON array of email objects |
 | `inbox analyze --count 50 --all` | Include read emails | JSON array (read + unread) |
 | `inbox analyze --since 7d` | Only emails from last 7 days | JSON array (filtered by date) |
+| `inbox analyze --older-than 30d` | Only emails older than 30 days | JSON array (server-side filtered) |
 | `inbox analyze --group-by sender` | Group emails by sender domain | `{groups: [{sender, count, emails}], totalCount}` |
+| `inbox read --id <id>` | Read full email content | Email headers + body |
+| `inbox read --id <id> --links` | Extract links from email | List of URLs with optional link text |
+| `inbox read --id <id> --links --json` | Extract links as JSON | `{id, subject, from, linkCount, links}` |
+| `inbox search -q "query"` | Search using Gmail query syntax | JSON array of matching emails |
 | `inbox accounts` | List configured accounts | Account names and emails |
 
 ### Actions
@@ -276,8 +371,10 @@ Based on the summary stats, immediately suggest ONE clear next action:
 | One account has >50% of unread | "[account] has X of your Y unread—let me triage that first." |
 | Total unread ≤ 5 | "Only X unread—here's a quick summary:" (show inline) |
 | All accounts have 1-2 unread | "Light inbox day. Quick summary of all emails:" |
+| Total unread > 20 | "Heavy inbox. Let me group by sender to find batch cleanup opportunities." → `--group-by sender` |
 | Total unread > 30 | "Heavy inbox. I'll process by account, starting with [highest]." |
 | Single account with 0 unread | "Inbox zero on [account]! Want me to check the others?" |
+| Grouped analysis shows sender with 5+ emails | "[sender] has X emails. Delete them all?" |
 
 **Example good response:**
 ```
@@ -453,6 +550,8 @@ When user has job-related emails (LinkedIn, Indeed, recruiters) and wants to eva
 | "Delete [sender]'s emails" | Bulk sender cleanup | Two-step pattern with `--sender` filter |
 | "Delete the security emails" | Subject-based cleanup | `--match "security" --dry-run` → confirm → `--ids` |
 | "What senders have the most emails?" | Inbox analysis | `inbox analyze --group-by sender` |
+| "What links are in this email?" | Extract URLs | `inbox read --id <id> --links` |
+| "Find my old emails" / "Clean up old stuff" | Stale email review | `inbox analyze --older-than 30d` |
 | "I keep getting these" | Recurring annoyance | Suggest unsubscribe/filter, then delete batch |
 | "Check [specific account]" | Single-account focus | Skip other accounts entirely |
 | "Undo" / "Restore" | Recover deleted emails | `inbox restore --last N` |
