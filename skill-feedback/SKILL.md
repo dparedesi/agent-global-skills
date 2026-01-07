@@ -221,7 +221,7 @@ Use this structure:
 
 ### 4. Save the Report
 
-**Default location:** `~/claude/skills/skill-feedback/.feedback/skill-feedback-{name}-{YYYYMMDD-HHMM}.md`
+**Default location:** `~/.claude/skills/skill-feedback/.feedback/skill-feedback-{name}-{YYYYMMDD-HHMM}.md`
 
 ### 5. Offer Implementation
 
