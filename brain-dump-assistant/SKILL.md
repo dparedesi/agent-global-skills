@@ -1,7 +1,8 @@
 ---
 name: brain-dump-assistant
-source: brain-dump
+source: brain-dump-cli
 description: Manage a personal knowledge capture system. Use when the user wants to capture ideas, track todos, organize projects, review their brain dump, or mentions "brain dump", "capture this", "add to my list", "what's on my plate", "what should I focus on", or "daily review".
+hash: 9fe14195d8135ee288c4a269ac1c110c
 ---
 
 # Brain Dump Assistant
@@ -33,6 +34,14 @@ When assisting users with their brain dump:
 
 6. **Respect simplicity** - Simple thoughts don't need tags, priorities, and parents. Don't over-engineer.
 
+## User Preferences (Memory)
+
+brain-dump stores long-term user preferences at `~/.config/brain-dump/user-preferences.md`.
+
+- Read preferences at the start of a session when present.
+- Append stable, reusable preferences with `brain preferences --append "## Section" "..."`.
+- Avoid overwriting user-written content; prefer section-based appends.
+
 ## Operating Modes
 
 Detect user intent and respond appropriately:
@@ -44,6 +53,13 @@ Detect user intent and respond appropriately:
 | **Triage** | "Process my brain dump", "What needs attention?" | Surface raw entries, help classify and prioritize |
 | **Focus** | "What should I work on?", "Priority items" | P1 todos + active projects, clear next actions |
 | **Cleanup** | "Archive completed", "Clean up old stuff" | Bulk operations with preview and confirmation |
+
+### Volume Modes (Quick vs Deep)
+
+| Mode | Trigger | Behavior |
+|------|---------|----------|
+| **Quick** | <10 entries returned | Direct answers, lightweight summaries, minimal batching |
+| **Deep** | 10+ entries returned | Summarize first, propose batches, confirm before bulk actions |
 
 ## Quick Start
 
@@ -58,6 +74,8 @@ Detect user intent and respond appropriately:
 | Show details | `brain show <id>` |
 | Mark done | `brain done <id>` |
 | Get stats | `brain stats` |
+| Setup wizard | `brain setup` |
+| Edit preferences | `brain preferences --edit` |
 
 ## Pre-flight Check
 
@@ -343,6 +361,19 @@ When user is dumping thoughts rapidly:
 3. **Log before delete** - All deletions are recoverable via `brain restore`
 4. **Confirm bulk operations** - Operations affecting >10 entries require confirmation
 5. **Don't over-organize** - Simple thoughts don't need tags, priorities, and parents
+
+## Proactive Recommendation Patterns
+
+- If raw entries are piling up, suggest `brain triage`.
+- If P1 todos exist, suggest `brain focus`.
+- If many stale active items exist, suggest a weekly review.
+- If preferences specify cadence, follow it by default.
+
+## Batch Processing Protocols
+
+- Filters are for discovery; use IDs for execution.
+- Keep batches small (10-25 items) and confirm between batches.
+- Use `--dry-run` whenever available before bulk changes.
 
 ## Two-Step Pattern for Bulk Operations
 
