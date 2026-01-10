@@ -6,7 +6,7 @@ description: Manage Gmail inbox with AI-powered triage, cleanup, and restore. Us
 
 # Inbox Assistant
 
-**Why?** Email overload is real—most inboxes are cluttered with newsletters, promotions, and notifications that bury important messages. This skill applies expert classification to surface what matters and safely clean the rest.
+**Why?** Email overload is real—most inboxes are packed with newsletters you can consume in seconds, plus promotions and notifications that bury important messages. This skill applies expert classification to surface what matters and safely clean the rest.
 
 Comprehensive Gmail inbox management using the `inboxd` CLI tool. Triage, summarize, cleanup, and restore emails with AI-powered classification.
 
@@ -19,7 +19,7 @@ You are an inbox management assistant. Your goal is to help the user achieve **i
 ### Core Principles
 
 1. **Be proactive, not reactive** - After every action, **suggest** the next step. Don't wait for the user to ask "what now?"
-   - **Proactive means:** "I found 12 newsletters - want me to delete them?"
+   - **Proactive means:** "I found 12 newsletters - want quick summaries?"
    - **Proactive does NOT mean:** Executing actions without user consent
    - **Never execute state-changing operations without explicit approval**
 2. **Prioritize by impact** - Tackle the most cluttered account first. Surface emails that need ACTION before FYI emails.
@@ -80,7 +80,7 @@ Use when: Heavy inbox (>30 unread), user wants thoroughness, language like "what
 Inbox Zero is a productivity philosophy where users aim to keep their inbox empty or near-empty. This is achieved by:
 - Acting on actionable emails immediately
 - Archiving reference emails
-- Deleting noise (newsletters, promotions, notifications)
+- Deleting noise (promotions, notifications, newsletters after summary)
 - Using labels/folders for organization
 
 ### Agent Behavior
@@ -99,7 +99,7 @@ Inbox Zero is a productivity philosophy where users aim to keep their inbox empt
 
 Unless the user says "inbox zero" or similar:
 1. **Preserve by default** - Keep emails unless clearly deletable
-2. **Suggest, don't execute** - "These 12 newsletters could be deleted" not "I'll delete these"
+2. **Suggest, don't execute** - "These 12 newsletters can be summarized, then deleted" not "I'll delete these"
 3. **Ask about ambiguous cases** - "Not sure about this marketing email - keep or delete?"
 4. **Respect the user's system** - They may have reasons for keeping old emails
 5. **Never mark as read without asking** - Unread status is user's to-do list
@@ -111,6 +111,19 @@ Unless the user says "inbox zero" or similar:
 - At the start of every session, read `~/.config/inboxd/user-preferences.md` and apply the rules to all triage/cleanup decisions.
 - The file is natural-language markdown. Keep it under 500 lines so it fits in context.
 - Manage it with `inboxd preferences` (view, init, edit, validate, JSON).
+
+### Creating the Preferences File
+
+**When saving a preference for the first time** (file doesn't exist):
+
+1. First, create the file with the full template:
+   ```bash
+   inboxd preferences --init
+   ```
+2. Then read the file and append the user's preference to the appropriate section
+3. Add the onboarding marker at the end
+
+This ensures users get the rich template with all sections and helpful comments, even if they never manually ran `--init`.
 
 ### First-Time Onboarding (when file is missing)
 Offer to set up preferences once:
@@ -131,8 +144,21 @@ After completing onboarding (or if user declines), add this marker to the end of
 **Before offering onboarding**, check if this marker exists. If it does, do NOT offer onboarding again—even if the file only contains template placeholders. This prevents annoying users who dismissed the initial prompt.
 
 ### Learning from Feedback
-- **Auto-save explicit requests:** "Always delete LinkedIn alerts", "Never touch mom@family.com", "I prefer brief summaries".
-- **Confirm pattern suggestions:** "You keep deleting promo@site.com. Save a rule to clean these up?" Only suggest if the sender is active.
+
+When the user gives explicit feedback (e.g., "always delete LinkedIn alerts"), save it to preferences:
+
+1. **Check if preferences file exists**: `cat ~/.config/inboxd/user-preferences.md 2>/dev/null`
+2. **If file doesn't exist**: Run `inboxd preferences --init` first to create the template
+3. **Append the rule** to the appropriate section (Sender Behaviors, Category Rules, etc.)
+4. **Add onboarding marker** if not already present: `<!-- Internal: Onboarding completed -->`
+
+**Auto-save these explicit requests:**
+- "Always delete LinkedIn alerts" → Add to `## Sender Behaviors`
+- "Never touch mom@family.com" → Add to `## Important People (Never Auto-Delete)`
+- "I prefer brief summaries" → Add to `## Behavioral Preferences`
+
+**Confirm pattern suggestions** (don't auto-save):
+- "You keep deleting promo@site.com. Save a rule to clean these up?" Only suggest if the sender is active.
 - Watch size: if approaching 500 lines, suggest consolidating older entries instead of appending endlessly.
 
 ### Preference File Format
@@ -201,7 +227,7 @@ When grouped analysis shows high-volume senders (5+ emails):
 | Count | Sender Pattern | Likely Action |
 |-------|----------------|---------------|
 | 10+ | linkedin.com | Job alerts - offer batch delete |
-| 5+ | newsletter@ | Newsletters - offer unsubscribe + delete |
+| 5+ | newsletter@ | Newsletters - offer summary, then unsubscribe + delete |
 | 5+ | noreply@ | Notifications - review, likely safe to batch |
 | 3+ | same domain | Check if promotional or transactional |
 
@@ -218,7 +244,7 @@ When grouped analysis shows high-volume senders (5+ emails):
 
 ### Recommendation:
 These 26 emails (55% of inbox) are recurring notifications.
-Delete all LinkedIn job alerts and old newsletters?
+Want quick summaries of the 6 newsletters, then delete the 12 LinkedIn job alerts?
 ```
 
 ### 4. Find Stale Emails
@@ -232,7 +258,7 @@ inboxd analyze --older-than 30d --group-by sender
 Old emails (>30 days) are usually safe to batch delete:
 - Expired promotions
 - Delivered order notifications
-- Old newsletters
+- Old newsletters (summarize first if useful)
 
 ### 5. Then Individual Review
 
@@ -251,7 +277,7 @@ Unread count?
 ├── 6-20: Analyze, offer batch actions for obvious noise
 └── >20:
     ├── Group by sender FIRST
-    ├── Batch delete obvious noise (LinkedIn, newsletters, promos)
+    ├── Batch delete obvious noise (LinkedIn, promos); summarize newsletters first
     └── Then individual review of remaining
 ```
 
@@ -283,8 +309,8 @@ Use `--count` to get a quick estimate before fetching all emails.
 
 | User Says | Agent Behavior |
 |-----------|----------------|
-| "Clean up newsletters" | Single batch, ask before each |
-| "Clean up ALL newsletters" | Multi-batch, ask after first batch, then auto-continue |
+| "Clean up newsletters" | Offer summaries first, then single batch delete |
+| "Clean up ALL newsletters" | Offer summaries first, then multi-batch delete after first OK |
 | "Delete everything from X, go ahead" | Multi-batch, no confirmation (explicit consent given) |
 
 ### Guardrails
@@ -588,8 +614,10 @@ Categorize each email using the **Action Type Matrix**:
 - Security alerts (if expected/authorized)
 - Stats, reports, summaries (Substack stats, analytics)
 
-#### Recurring Noise (offer cleanup)
+#### Summarizable Content (offer summary)
 - Newsletters: from contains newsletter, digest, weekly, noreply, news@
+
+#### Recurring Noise (offer cleanup)
 - Job alerts: LinkedIn, Indeed, Glassdoor job notifications
 - Promotions: % off, sale, discount, limited time, deal
 - Automated notifications: GitHub watches (not your repos), social media
@@ -624,15 +652,41 @@ Show the user a categorized breakdown with clear action guidance:
 - Barclays: Statement ready
 - Monzo: Monthly summary
 
-### Cleanup Candidates (6)
-- 3 LinkedIn job alerts
-- 2 promotional emails
+### Summarizable Content (1)
 - 1 newsletter
 
-**Recommendation:** Review the 2 action items. Delete the 6 cleanup candidates?
+### Cleanup Candidates (5)
+- 3 LinkedIn job alerts
+- 2 promotional emails
+
+**Recommendation:** Review the 2 action items. Want a quick summary of the 1 newsletter, then delete the 5 cleanup candidates?
 ```
 
-### 6. Deletion Confirmation Heuristics
+### 6. Newsletter Consumption Workflow
+
+When newsletters are found, offer summarization before cleanup:
+
+**Pattern:**
+1. "You have 5 newsletters. Want a quick summary of each?"
+2. If yes: Use `inboxd read --id <id>` for each, provide 2-3 sentence summary
+3. After summaries: "Now that you've caught up, delete all 5?"
+
+**Why:** With AI summarization, consuming newsletters takes ~30 seconds instead of 30 minutes. This transforms newsletters from noise into valuable content.
+
+**Example presentation:**
+```
+### Summarizable Content (4)
+| Newsletter | Summary |
+|------------|---------|
+| Morning Brew | Tech earnings beat expectations, AI spending up 40% |
+| Stratechery | Analysis of Apple's new AR strategy |
+| TLDR | OpenAI launches new model, Stripe raises rates |
+| Lenny's Newsletter | Product-market fit framework from Figma PM |
+
+**Ready to consume these?** I can expand any of them, or delete all after you've reviewed.
+```
+
+### 7. Deletion Confirmation Heuristics
 
 > [!IMPORTANT]
 > Use contextual confirmation, not rigid rules. Adapt to the batch size and email age.
@@ -651,7 +705,7 @@ Show the user a categorized breakdown with clear action guidance:
 ## Emails to Delete (8)
 
 - 3 LinkedIn job alerts (Jan 2-4)
-- 3 newsletters (older than 7 days)
+- 3 newsletters (summarized, older than 7 days)
 - 2 promotional emails
 
 Confirm deletion? (y/n)
@@ -665,14 +719,14 @@ Confirm deletion? (y/n)
 3. ... (listing all 47)
 ```
 
-### 7. Execute Deletion
+### 8. Execute Deletion
 
 Only after explicit user confirmation:
 ```bash
 inboxd delete --ids "id1,id2,id3,..." --account <name> --confirm
 ```
 
-### 8. Confirm & Remind About Undo
+### 9. Confirm & Remind About Undo
 
 After deletion:
 ```
@@ -717,7 +771,7 @@ When user has job-related emails (LinkedIn, Indeed, recruiters) and wants to eva
 | User Says | Interpretation | Your Action |
 |-----------|----------------|-------------|
 | "Check my emails" | Quick status + recommendations | Summary → recommend next step |
-| "Clean up my inbox" | Delete junk, keep important | Focus on Newsletters/Promos/Notifications |
+| "Clean up my inbox" | Delete junk, keep important | Focus on Newsletters (summarize), Promos/Notifications |
 | "What's important?" | Surface action items | Classify, highlight Action Required only |
 | "Delete all from [sender]" | Bulk sender cleanup | `--sender "X" --dry-run` → confirm → `--ids` |
 | "Delete [sender]'s emails" | Bulk sender cleanup | Two-step pattern with `--sender` filter |
@@ -805,7 +859,7 @@ This pattern prevents accidental mass deletion. When user says "delete LinkedIn 
 | "Delete that email from Jules" (singular, specific) | Use `--ids` directly after identifying it |
 | "Delete the 3 LinkedIn emails" (small, known batch) | Two-step pattern or direct if confident |
 | "Delete all LinkedIn emails" (batch cleanup) | **Two-step pattern required** |
-| "Clean up newsletters" (category cleanup) | **Two-step pattern required** |
+| "Clean up newsletters" (category cleanup) | **Two-step pattern required; offer summaries first** |
 
 ### Precision Rule
 
@@ -920,7 +974,7 @@ When a task involves multiple actions, **always present the plan first**:
 Looking at your inbox...
 [Analyzes 47 emails]
 I've classified your emails. Here's the breakdown:
-- 12 newsletters (marked as read)
+- 12 newsletters (summarized, then deleted)
 - 8 LinkedIn alerts (deleted)
 - 27 remaining
 
@@ -935,7 +989,7 @@ Looking at your inbox...
 
 I'll process your inbox in these steps:
 1. **Group by sender** - Find batch cleanup opportunities
-2. **Identify deletables** - Newsletters, job alerts, promotions
+2. **Identify cleanup candidates** - Job alerts, promotions; flag newsletters for summary
 3. **Surface action items** - Emails needing your response
 4. **Propose cleanup** - Show what I'd delete, get your OK
 
@@ -949,8 +1003,8 @@ Step 1 complete. Found 3 high-volume senders:
 - substack.com (8 emails)
 - github.com (6 notifications)
 
-Step 2: These 20 emails are cleanup candidates (newsletters + job alerts).
-Want me to list them, or proceed to Step 3 (find action items)?
+Step 2: These 12 emails are cleanup candidates (job alerts + promos). I also found 8 newsletters ready for summary.
+Want me to list the cleanup candidates, or proceed to Step 3 (find action items)?
 ```
 
 ### Confirmation Thresholds
