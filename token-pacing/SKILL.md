@@ -1,29 +1,90 @@
 ---
 name: token-pacing
-description: Calculate the optimal token usage burn rate to reach exactly 100% usage by the weekly reset. Use when the user asks about token budget, usage limits, spending speed, or "will I run out".
+description: Calculate the optimal token usage burn rate to reach exactly 100% usage by reset. Use when the user asks about token budget, usage limits, spending speed, or "will I run out". Supports Claude, Gemini, Codex, VS Code, and other providers.
 ---
 
 # Token Pacing Calculator
 
-Analyzes current token usage against the weekly reset deadline to provide a specific daily burn rate target.
+Analyzes current token usage against the reset deadline to provide a specific daily burn rate target.
 
 **Why?** Optimizes resource utility by ensuring the user neither runs out of tokens too early nor leaves unused budget on the table.
 
 ## Quick Start
 
-1. Get **current usage %** and **reset date/time** from user
-2. Run calculations (Steps 1-4 below)
-3. Output the Token Pacing Report
+1. Identify **provider** from user's message (or ask)
+2. Get **current metric** (usage % or % remaining)
+3. Apply provider profile to get reset period and normalize metric
+4. Run calculations (Steps 1-4 below)
+5. Output the Token Pacing Report
+
+---
+
+## Provider Profiles
+
+Auto-detect the provider and apply these defaults:
+
+| Provider | Aliases | Metric Shown | Reset Period | Reset Day |
+|----------|---------|--------------|--------------|-----------|
+| **Claude** | Claude Code, Anthropic | Usage % | Weekly | User-specific (ask) |
+| **Gemini** | Google Gemini, Gemini Code | Usage % | Weekly | User-specific (ask) |
+| **Codex** | OpenAI Codex, ChatGPT | % Remaining | Weekly | User-specific (ask) |
+| **VS Code** | VS Code Copilot, GitHub Copilot (VS Code) | Usage % | Monthly | 1st of month |
+| **Cursor** | Cursor AI | Usage % | Monthly | 1st of month |
+| **Windsurf** | Codeium Windsurf | Usage % | Monthly | 1st of month |
+
+> [!NOTE]
+> Weekly providers (Claude, Gemini, Codex) have **personal reset cycles** — there's no universal reset day. Ask the user (unless provided): "When does your week reset?"
+
+### Metric Normalization
+
+```
+If provider shows "% remaining" (e.g., Codex):
+    usage_% = 100 - remaining_%
+Else:
+    usage_% = reported value
+```
+
+### Reset Date Calculation
+
+**Weekly providers (Claude, Gemini, Codex):**
+```
+# Reset day is USER-SPECIFIC — must ask if not provided
+# Example: "My Claude resets on Thursdays" or "resets in 3 days"
+cycle_days = 7
+reset = user's next reset date/time
+days_remaining = (reset - now) in days
+days_elapsed = cycle_days - days_remaining
+```
+
+**Monthly providers (VS Code, Cursor, Windsurf):**
+```
+# Reset is predictable — 1st of next month
+cycle_days = days in current month (28-31)
+reset = 1st of next month, 12:00am
+days_remaining = (reset - now) in days
+days_elapsed = current day of month
+```
+
+> [!TIP]
+> For weekly providers, if user doesn't know their reset day, suggest they check their usage dashboard — it usually shows "resets in X days".
 
 ---
 
 ## Inputs Required
 
-1. **Current Usage %** (e.g., "31%")
-2. **Reset Date/Time** (e.g., "Wednesday 9am" or "Jan 15 9am")
+**For monthly providers (VS Code, Cursor, Windsurf):**
+- Just the metric value — reset date is predictable
+- Example: "16% in VS Code"
+
+**For weekly providers (Claude, Gemini, Codex):**
+- Metric value + reset info (days remaining or reset day)
+- Example: "31% in Claude, resets in 4 days" or "Codex 40% left, resets Thursday"
 
 > [!TIP]
-> If the user says "reset in X days", convert to an actual datetime. If either input is missing, ask the user.
+> If user gives weekly provider without reset info, ask: "When does your usage reset? (e.g., 'in 3 days' or 'on Friday')"
+
+> [!CAUTION]
+> **Ambiguous phrasing:** If user says "X% left" for a non-Codex provider, clarify immediately: "Is that X% *used* or X% *remaining*?" — this changes the calculation entirely.
 
 ---
 
@@ -31,20 +92,33 @@ Analyzes current token usage against the weekly reset deadline to provide a spec
 
 Perform these calculations directly — no external script needed.
 
+### Step 0: Validate Inputs
+
+Before calculating, confirm:
+1. **Provider** is identified → if not, ask
+2. **Metric type** is clear (usage % vs % remaining) → if ambiguous, clarify
+3. **Reset info** is available → for weekly providers, ask if missing
+
 ### Step 1: Calculate Time Metrics
 
 ```
 now = current date/time
-reset = reset date/time (convert user's input to actual datetime)
+reset = reset date/time (from provider profile or user input)
 days_remaining = (reset - now) in days (decimal, e.g., 4.4)
-days_elapsed = 7 - days_remaining
-time_elapsed_% = (days_elapsed / 7) × 100
+cycle_days = 7 (weekly) or days_in_month (monthly)
+days_elapsed = cycle_days - days_remaining
+time_elapsed_% = (days_elapsed / cycle_days) × 100
 ```
 
 ### Step 2: Calculate Usage Metrics
 
 ```
-usage_% = user's current usage (e.g., 31)
+# Normalize metric based on provider
+if provider shows "% remaining":
+    usage_% = 100 - reported_value
+else:
+    usage_% = reported_value
+
 remaining_% = 100 - usage_%
 daily_target = remaining_% / days_remaining
 ```
@@ -80,6 +154,7 @@ Report the following:
 ```
 ## Token Pacing Report
 
+**Provider:** [Provider Name] ([weekly/monthly] reset)
 **Status:** [Under Budget / On Track / Over Budget]
 
 | Metric | Value |
@@ -103,27 +178,69 @@ Report the following:
 
 ## Examples
 
-### Example 1: Under Budget (The Saver)
+### Example 1: VS Code (Monthly Reset)
 
-**Input:** 31% used, reset Jan 15 9am, current time Jan 10 ~3am
+**Input:** "16% in VS Code" (current date: Jan 11)
 
 ```
-days_remaining = 4.4 days
-days_elapsed = 7 - 4.4 = 2.6 days
-time_elapsed_% = (2.6 / 7) × 100 = 37%
+Provider: VS Code → monthly reset, 1st of next month
+cycle_days = 31 (January)
+days_elapsed = 11
+days_remaining = 20
+time_elapsed_% = (11 / 31) × 100 = 35.5%
 
-usage_% = 31%
-remaining_% = 69%
-daily_target = 69 / 4.4 = 15.7%/day
+usage_% = 16%
+remaining_% = 84%
+daily_target = 84 / 20 = 4.2%/day
 
-buffer_% = 37 - 31 = +6% (saving tokens)
-status = Under Budget (31 < 37 - 3)
+buffer_% = 35.5 - 16 = +19.5% (well under budget)
+status = Under Budget
 ```
 
 **Output:**
 ```
 ## Token Pacing Report
 
+**Provider:** VS Code (monthly reset)
+**Status:** Under Budget
+
+| Metric | Value |
+|--------|-------|
+| Used | 16% |
+| Time Elapsed | 35.5% |
+| Buffer | +19.5% |
+| Remaining | 84% over 20 days |
+| Daily Target | 4.2%/day |
+
+You're saving tokens. Increase to 4.2%/day to fully utilize your allocation.
+```
+
+---
+
+### Example 2: Claude (Weekly Reset)
+
+**Input:** "31% used in Claude" (current: Jan 10, reset: Jan 15 Wed 9am PT)
+
+```
+Provider: Claude → weekly reset, Wednesday 9am PT
+cycle_days = 7
+days_remaining = 4.4 days
+days_elapsed = 2.6 days
+time_elapsed_% = (2.6 / 7) × 100 = 37%
+
+usage_% = 31%
+remaining_% = 69%
+daily_target = 69 / 4.4 = 15.7%/day
+
+buffer_% = 37 - 31 = +6%
+status = Under Budget
+```
+
+**Output:**
+```
+## Token Pacing Report
+
+**Provider:** Claude (weekly reset)
 **Status:** Under Budget
 
 | Metric | Value |
@@ -139,66 +256,109 @@ You're saving tokens. You can increase usage to 15.7%/day to hit 100% by reset.
 
 ---
 
-### Example 2: Over Budget (The Spender)
+### Example 3: Codex (% Remaining Format)
 
-**Input:** 80% used, reset in 4 days, current time is day 3 of 7
+**Input:** "Codex shows 40% left" (current: Thursday, reset: Sunday 12am)
 
 ```
-days_remaining = 4 days
-days_elapsed = 7 - 4 = 3 days
-time_elapsed_% = (3 / 7) × 100 = 43%
+Provider: Codex → weekly reset, shows % REMAINING (invert!)
+usage_% = 100 - 40 = 60%
 
-usage_% = 80%
-remaining_% = 20%
-daily_target = 20 / 4 = 5%/day
+cycle_days = 7
+days_remaining = 2.5 days (Thu to Sun)
+days_elapsed = 4.5 days
+time_elapsed_% = (4.5 / 7) × 100 = 64%
 
-buffer_% = 43 - 80 = -37% (behind schedule)
-status = Over Budget (80 > 43 + 3)
+remaining_% = 40%
+daily_target = 40 / 2.5 = 16%/day
+
+buffer_% = 64 - 60 = +4%
+status = On Track
 ```
 
 **Output:**
 ```
 ## Token Pacing Report
 
+**Provider:** Codex (weekly reset)
+**Status:** On Track
+
+| Metric | Value |
+|--------|-------|
+| Used | 60% (40% remaining) |
+| Time Elapsed | 64% |
+| Buffer | +4% |
+| Remaining | 40% over 2.5 days |
+| Daily Target | 16%/day |
+
+You're pacing well. Maintain ~16%/day.
+```
+
+---
+
+### Example 4: Over Budget (The Spender)
+
+**Input:** "80% in Gemini" (current: Tuesday, reset: Monday 12am)
+
+```
+Provider: Gemini → weekly reset, Monday 12am PT
+cycle_days = 7
+days_remaining = 6 days
+days_elapsed = 1 day
+time_elapsed_% = (1 / 7) × 100 = 14%
+
+usage_% = 80%
+remaining_% = 20%
+daily_target = 20 / 6 = 3.3%/day
+
+buffer_% = 14 - 80 = -66% (way behind)
+status = Over Budget
+```
+
+**Output:**
+```
+## Token Pacing Report
+
+**Provider:** Gemini (weekly reset)
 **Status:** Over Budget
 
 | Metric | Value |
 |--------|-------|
 | Used | 80% |
-| Time Elapsed | 43% |
-| Buffer | -37% |
-| Remaining | 20% over 4 days |
-| Daily Target | 5%/day |
+| Time Elapsed | 14% |
+| Buffer | -66% |
+| Remaining | 20% over 6 days |
+| Daily Target | 3.3%/day |
 
-You're burning fast. Limit usage to 5%/day to last until reset.
+You're burning fast. Limit usage to 3.3%/day to last until reset.
 ```
-
-> [!WARNING]
-> At 5%/day, the user has very limited capacity. Consider suggesting they prioritize critical tasks only.
 
 ---
 
-### Example 3: On Track (The Balanced)
+### Example 5: On Track (The Balanced)
 
-**Input:** 50% used, 3.5 days remaining (half the week)
+**Input:** "50% in Claude" (mid-week)
 
 ```
+Provider: Claude → weekly reset
+cycle_days = 7
 days_remaining = 3.5 days
-days_elapsed = 7 - 3.5 = 3.5 days
-time_elapsed_% = (3.5 / 7) × 100 = 50%
+days_elapsed = 3.5 days
+time_elapsed_% = 50%
 
 usage_% = 50%
 remaining_% = 50%
 daily_target = 50 / 3.5 = 14.3%/day
 
-buffer_% = 50 - 50 = 0% (perfectly balanced)
-status = On Track (within ±3%)
+buffer_% = 0%
+status = On Track
 ```
 
 **Output:**
 ```
 ## Token Pacing Report
 
+**Provider:** Claude (weekly reset)
 **Status:** On Track
 
 | Metric | Value |
@@ -227,17 +387,30 @@ You're pacing well. Maintain ~14.3%/day.
 > [!WARNING]
 > If `daily_target > 50%/day`, add this warning: "This requires very heavy usage. Consider whether you can realistically sustain this pace."
 
+### Pre-Calculation Checklist
+
+Before running calculations, verify:
+
+- [ ] Provider identified (or asked)
+- [ ] Metric type confirmed (usage % vs % remaining)
+- [ ] Reset period known (weekly vs monthly)
+- [ ] For weekly providers: reset day/time obtained from user
+- [ ] Ambiguous phrasing clarified ("50% left" → usage or remaining?)
+
 ---
 
 ## Troubleshooting
 
 | Problem | Solution |
 |---------|----------|
+| Provider not specified | Ask: "Which tool? (Claude, Gemini, VS Code, Codex, Cursor, Windsurf)" |
 | User gives ambiguous date ("next Wednesday") | Parse as the next upcoming occurrence from current date |
 | Reset time appears to be in the past | Ask user to confirm the next reset date |
 | Usage reported as > 100% | Report status as "Exhausted" with 0% remaining, 0%/day target |
-| User doesn't know exact reset time | Default to 9:00 AM in user's timezone, or ask for clarification |
+| User doesn't know exact reset time | Use provider default from profiles table |
 | Very short time remaining (< 4 hours) | Switch to per-hour targets and emphasize urgency |
+| Unknown provider | Ask for reset period (weekly/monthly) and metric type (usage % or % remaining) |
+| User reports "X% left" for non-Codex | Clarify: "Is that usage or remaining?" then normalize |
 
 ---
 
@@ -245,7 +418,9 @@ You're pacing well. Maintain ~14.3%/day.
 
 | Mistake | Correct Approach |
 |---------|------------------|
-| Using 5 days instead of 7 for weekly cycle | Always base calculations on 7-day cycle |
+| Assuming weekly reset for all providers | Check provider profile — VS Code/Cursor/Windsurf are monthly |
+| Not inverting "% remaining" for Codex | Codex shows remaining; convert: `usage = 100 - remaining` |
+| Using 7 days for monthly providers | Use actual days in month (28-31) |
 | Forgetting to convert "days left" to decimal | Use precise decimal (e.g., 4.4 days, not 4 days) |
 | Reporting buffer as absolute tokens | Buffer is always a percentage |
 | Not adjusting for partial days | Include fractional days in calculations |

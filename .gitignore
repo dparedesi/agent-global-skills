@@ -5,3 +5,4 @@ claude-dashboard/dashboard.html
 *.backup
 annual-review-feedback/
 .kiro/
+.tmp/
