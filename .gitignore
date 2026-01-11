@@ -1,8 +1,17 @@
-*.DS_Store
-claude-dashboard/dashboard.html
-.claude
-*.feedback
-*.backup
-annual-review-feedback/
+# OS
+.DS_Store
+
+# AI tools (local state)
+.claude/
 .kiro/
+
+# Temp & backups
 .tmp/
+*.backup
+*.feedback
+
+# Python
+__pycache__/
+
+# Private
+arf/
