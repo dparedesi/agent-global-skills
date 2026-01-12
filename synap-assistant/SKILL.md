@@ -2,7 +2,7 @@
 name: synap-assistant
 source: synap-cli
 description: Manage a personal knowledge capture system. Use when the user wants to capture ideas, track todos, organize projects, review their synap, or mentions "synap", "brain dump", "capture this", "add to my list", "what's on my plate", "what should I focus on", or "daily review".
-hash: 9c86041f8c7095822804f47de0b68715
+hash: 6a7ec55e156503d37b1c8632c43abe48
 ---
 
 # synap Assistant
@@ -67,6 +67,7 @@ Detect user intent and respond appropriately:
 |------|---------|
 | Capture idea | `synap add "your thought here"` |
 | Add todo | `synap todo "task description"` |
+| Add todo with due date | `synap todo "Review PR #42" --due tomorrow` |
 | Add question | `synap question "what you're wondering"` |
 | List active | `synap list` |
 | See all | `synap list --all` |
@@ -98,6 +99,7 @@ Quick capture of a thought.
 ```bash
 synap add "What if we used a graph database?"
 synap add "Need to review the API design" --type todo --priority 1
+synap add "Prep for demo" --type todo --due 2025-02-15
 synap add "Meeting notes from standup" --type note --tags "meetings,weekly"
 synap add --type project --title "Website Redesign" "Complete overhaul of the marketing site..."
 ```
@@ -108,6 +110,7 @@ synap add --type project --title "Website Redesign" "Complete overhaul of the ma
 - `--priority <1|2|3>`: 1=high, 2=medium, 3=low
 - `--tags <tags>`: Comma-separated tags
 - `--parent <id>`: Parent entry ID
+- `--due <date>`: Due date (YYYY-MM-DD, 3d/1w, or keywords: today, tomorrow, next monday)
 - `--json`: JSON output
 
 #### `synap todo <content>`
@@ -118,6 +121,8 @@ synap todo "Review PR #42"
 # Equivalent to: synap add "Review PR #42" --type todo
 ```
 
+Options: `--priority`, `--tags`, `--parent`, `--due`, `--json`
+
 #### `synap question <content>`
 Shorthand for adding a question.
 
@@ -125,6 +130,8 @@ Shorthand for adding a question.
 synap question "Should we migrate to TypeScript?"
 # Equivalent to: synap add "..." --type question
 ```
+
+Options: `--priority`, `--tags`, `--parent`, `--due`, `--json`
 
 ### Query Commands
 
@@ -139,22 +146,30 @@ synap list --status raw                 # Needs triage
 synap list --priority 1                 # High priority only
 synap list --tags work,urgent           # Has ALL specified tags
 synap list --since 7d                   # Created in last 7 days
+synap list --overdue                    # Overdue entries
+synap list --due-before 7d              # Due in next 7 days
+synap list --has-due                    # Entries with due dates
 synap list --json                       # JSON output for parsing
 ```
 
 **Options**:
 - `--type <type>`: Filter by entry type
-- `--status <status>`: raw, active, someday, done, archived (default: raw,active)
+- `--status <status>`: raw, active, wip, someday, done, archived (default: raw,active)
 - `--tags <tags>`: Comma-separated, AND logic
 - `--priority <1|2|3>`: Filter by priority
 - `--parent <id>`: Children of specific entry
 - `--orphans`: Only entries without parent
 - `--since <duration>`: e.g., 7d, 24h, 2w
+- `--due-before <date>`: Due before date (YYYY-MM-DD or 3d/1w)
+- `--due-after <date>`: Due after date (YYYY-MM-DD or 3d/1w)
+- `--overdue`: Only overdue entries
+- `--has-due`: Only entries with due dates
+- `--no-due`: Only entries without due dates
 - `--all`: All statuses except archived
 - `--done`: Include done entries
 - `--archived`: Show only archived
 - `--limit <n>`: Max entries (default: 50)
-- `--sort <field>`: created, updated, priority
+- `--sort <field>`: created, updated, priority, due
 - `--reverse`: Reverse sort order
 - `--json`: JSON output
 
@@ -212,6 +227,14 @@ synap link a1b2c3d4 b2c3d4e5 --as-parent    # Set hierarchy
 synap link a1b2c3d4 b2c3d4e5 --unlink       # Remove relationship
 ```
 
+#### `synap log <id> <message>`
+Add timestamped log entry under parent. Use `--inherit-tags` to copy parent tags.
+
+```bash
+synap log a1b2c3d4 "Started work"
+synap log a1b2c3d4 "Checkpoint note" --inherit-tags
+```
+
 ### Bulk Commands
 
 #### `synap done <ids...>`
@@ -222,6 +245,24 @@ synap done a1b2c3d4
 synap done a1b2c3d4 b2c3d4e5 c3d4e5f6       # Multiple
 synap done --type todo --tags "sprint-1"     # By filter
 synap done --dry-run --type todo             # Preview first
+```
+
+#### `synap start <ids...>`
+Mark entries as work-in-progress.
+
+```bash
+synap start a1b2c3d4
+synap start --type todo --tags "sprint-1"
+synap start --dry-run --type todo
+```
+
+#### `synap stop <ids...>`
+Remove WIP status. Use `--all` to stop all WIP entries.
+
+```bash
+synap stop a1b2c3d4
+synap stop --all
+synap stop --dry-run --all
 ```
 
 #### `synap archive <ids...>`
@@ -432,13 +473,15 @@ Critical for preventing accidental mass changes:
   "content": "The full text of the entry",
   "title": "Short title (optional)",
   "type": "idea|project|feature|todo|question|reference|note",
-  "status": "raw|active|someday|done|archived",
+  "status": "raw|active|wip|someday|done|archived",
   "priority": 1|2|3|null,
   "tags": ["tag1", "tag2"],
   "parent": "parent-id|null",
   "related": ["id1", "id2"],
+  "due": "2026-01-10T23:59:59.000Z",
   "createdAt": "2026-01-05T08:30:00.000Z",
   "updatedAt": "2026-01-05T08:30:00.000Z",
+  "startedAt": "2026-01-05T08:30:00.000Z",
   "source": "cli|agent|import"
 }
 ```
