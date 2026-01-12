@@ -1,1 +1,0 @@
-Great. We are ready for new requests then. Why don't you launch a bunch of sub-agent explorer agents to understand fully my repo and propose me a "wouldn't it be great if we add..."? like, I need your ideas to see what else should we focused on. No need to edit files tho
