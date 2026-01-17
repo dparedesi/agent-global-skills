@@ -34,6 +34,9 @@ ps aux -m | head -6
 
 # Top processes by CPU (top 5)  
 ps aux -r | head -6
+
+# Network speed (built-in macOS tool)
+networkQuality
 ```
 
 > [!NOTE]
@@ -47,6 +50,7 @@ Present as a brief summary, NOT tables. Example format:
 🔋 Battery: 73% (discharging, ~20h remaining)
 💾 RAM: 17.1GB / 24GB used (71%)
 ⚡ CPU: Light load
+🌐 Network: ⬇️ 262 Mbps ⬆️ 26 Mbps (36ms latency)
 
 Top memory: Amp (478MB), Passwords (320MB), Spotlight (310MB)
 Top CPU: WindowServer (3.2%), Amp (2.1%), Finder (0.8%)
@@ -71,6 +75,11 @@ Apply these thresholds and provide recommendations:
 **CPU:**
 - Any process > 80% sustained: "⚠️ [Process] using significant CPU"
 - Any process > 150%: "🔴 [Process] may be stuck — consider force-quitting"
+
+**Network:**
+- Download < 10 Mbps: "⚠️ Slow download speed"
+- Upload < 5 Mbps: "⚠️ Slow upload speed"
+- Latency > 100ms: "⚠️ High latency — may affect video calls"
 
 **Common recommendations:**
 | Condition | Recommendation |
@@ -100,6 +109,7 @@ If healthy:
 🔋 Battery: 73% (discharging, ~20h remaining)
 💾 RAM: 17.1GB / 24GB (71%) — healthy
 ⚡ CPU: Light load (< 10% average)
+🌐 Network: ⬇️ 262 Mbps ⬆️ 26 Mbps (36ms latency)
 
 Top memory: Amp (478MB), Passwords (320MB), Spotlight (310MB)
 Top CPU: WindowServer (1.0%), Amp (0.7%), Finder (0.3%)
@@ -158,11 +168,11 @@ Want me to kill the stuck node process (PID 12847)?
 ### Output Validation Checklist
 
 Before presenting results, verify:
-- [ ] All three sections present (Battery, RAM, CPU)
+- [ ] All four sections present (Battery, RAM, CPU, Network)
 - [ ] Percentages calculated correctly (used/total × 100)
 - [ ] Top processes listed for both memory AND CPU
 - [ ] Recommendations match thresholds (not arbitrary)
-- [ ] Emojis used consistently (🔋💾⚡ for sections, ⚠️🔴✅ for status)
+- [ ] Emojis used consistently (🔋💾⚡🌐 for sections, ⚠️🔴✅ for status)
 
 ### Anti-Patterns to Avoid
 
@@ -179,6 +189,7 @@ Before presenting results, verify:
 - Battery states: "charging", "discharging", "fully charged", "not charging"
 - RAM levels: "healthy" (<85%), "high" (85-95%), "critical" (>95%)
 - CPU levels: "light" (<30%), "moderate" (30-60%), "high" (>60%)
+- Network levels: "slow" (download <10Mbps), "moderate" (10-50Mbps), "fast" (>50Mbps)
 
 ---
 
@@ -194,6 +205,8 @@ Before presenting results, verify:
 | Stuck process | Any process >150% CPU | Offers to kill with PID |
 | Desktop Mac | No battery (iMac, Mac Mini, Mac Pro) | Skips battery section gracefully |
 | Memory hog | Single process >2GB | Flags for potential action |
+| Slow network | Download <10 Mbps | Shows ⚠️ slow download warning |
+| High latency | Latency >100ms | Shows ⚠️ latency warning |
 
 ### Model Coverage
 
@@ -211,4 +224,7 @@ vm_stat | head -5
 
 # Verify process listing
 ps aux -m | head -3
+
+# Verify network test works
+networkQuality
 ```

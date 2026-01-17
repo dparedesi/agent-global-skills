@@ -110,7 +110,7 @@ Unless the user says "inbox zero" or similar:
 
 - At the start of every session, read `~/.config/inboxd/user-preferences.md` and apply the rules to all triage/cleanup decisions.
 - The file is natural-language markdown. Keep it under 500 lines so it fits in context.
-- Manage it with `inboxd preferences` (view, init, edit, validate, JSON).
+- Manage it with `inboxd preferences` (view, init, edit, validate, JSON) and `inboxd preferences set/remove/list` for programmatic updates.
 
 ### Creating the Preferences File
 
@@ -120,7 +120,7 @@ Unless the user says "inbox zero" or similar:
    ```bash
    inboxd preferences --init
    ```
-2. Then read the file and append the user's preference to the appropriate section
+2. Then add the user's preference with `inboxd preferences set --section <section> --entry "<preference>"`
 3. Add the onboarding marker at the end
 
 This ensures users get the rich template with all sections and helpful comments, even if they never manually ran `--init`.
@@ -149,7 +149,7 @@ When the user gives explicit feedback (e.g., "always delete LinkedIn alerts"), s
 
 1. **Check if preferences file exists**: `cat ~/.config/inboxd/user-preferences.md 2>/dev/null`
 2. **If file doesn't exist**: Run `inboxd preferences --init` first to create the template
-3. **Append the rule** to the appropriate section (Sender Behaviors, Category Rules, etc.)
+3. **Append the rule** with `inboxd preferences set --section <section> --entry "<rule>"` (idempotent)
 4. **Add onboarding marker** if not already present: `<!-- Internal: Onboarding completed -->`
 
 **Auto-save these explicit requests:**
@@ -162,9 +162,22 @@ When the user gives explicit feedback (e.g., "always delete LinkedIn alerts"), s
 - Watch size: if approaching 500 lines, suggest consolidating older entries instead of appending endlessly.
 
 ### Preference File Format
-- Sections: `## About Me`, `## Important People`, `## Sender Behaviors`, `## Category Rules`, `## Behavioral Preferences`.
-- When updating, **append to existing sections** (bullets), don't overwrite user content. Include brief context ("why") to help future decisions.
+- Sections: `## About Me`, `## Important People (Never Auto-Delete)`, `## Sender Behaviors`, `## Category Rules`, `## Behavioral Preferences`.
+- When updating, **append to existing sections** (bullets), don't overwrite user content. Prefer `inboxd preferences set` so entries stay idempotent.
+- Section aliases for `set/remove/list`: `sender`, `senders`, `important`, `vip`, `never delete`, `category`, `categories`, `behavior`, `about`.
 - Never delete the file; it lives outside the skill install path and must survive updates.
+
+### Compound Preference Actions
+
+When a preference specifies multiple actions (e.g., "mark as read AND archive"), execute ALL actions together in the same step:
+
+| Preference Says | Agent Executes |
+|-----------------|----------------|
+| "Mark as read and archive" | `mark-read --ids` THEN `archive --ids --confirm` |
+| "Summarize then delete" | Summarize content THEN `delete --ids --confirm` |
+| "Archive after 7 days" | Check age THEN `archive --ids --confirm` |
+
+**Critical**: Never split compound actions across separate user confirmations. If the preference says "X and Y", do both after a single approval.
 
 ### Smart Pattern Detection Window
 When suggesting new preferences from behavior:
@@ -357,6 +370,9 @@ Delete this batch? (yes / no / yes to all)
 | Quick count | `inboxd search -q "from:linkedin.com" --count` |
 | Fetch all matches | `inboxd search -q "from:linkedin.com" --all --max 200` |
 | Extract links from email | `inboxd read --id <id> --links` |
+| Quick metadata lookup | `inboxd read --id <id> --metadata-only` |
+| Send email | `inboxd send -t <email> -s <subject> -b <body> --confirm` |
+| Reply to email | `inboxd reply --id <id> -b <body> --confirm` |
 | Delete by ID | `inboxd delete --ids "id1,id2" --confirm` |
 | Delete by sender | `inboxd delete --sender "linkedin" --dry-run` → confirm → delete |
 | Delete by subject | `inboxd delete --match "weekly digest" --dry-run` |
@@ -446,6 +462,7 @@ This will guide you through:
 | `inboxd analyze --older-than 30d` | Only emails older than 30 days | JSON array (server-side filtered) |
 | `inboxd analyze --group-by sender` | Group emails by sender domain | `{groups: [{sender, count, emails}], totalCount}` |
 | `inboxd read --id <id>` | Read full email content | Email headers + body |
+| `inboxd read --id <id> --metadata-only` | Quick lookup without body (saves tokens) | `{id, from, to, subject, date, snippet, labelIds}` |
 | `inboxd read --id <id> --links` | Extract links from email | List of URLs with optional link text |
 | `inboxd read --id <id> --links --json` | Extract links as JSON | `{id, subject, from, linkCount, links}` |
 | `inboxd search -q "query"` | Search using Gmail query syntax (default: 100 results) | JSON array of matching emails |
@@ -464,6 +481,10 @@ This will guide you through:
 | `inboxd delete --sender "X" --match "Y" --confirm` | Delete by combined filters (AND) |
 | `inboxd delete --sender "X" --limit 100 --confirm` | Override 50-email safety limit |
 | `inboxd delete --sender "ab" --force --confirm` | Override short-pattern warning |
+| `inboxd send -t <email> -s <subject> -b <body> --confirm` | Send a new email |
+| `inboxd send --to <email> --subject <subject> --body <body> --dry-run` | Preview email without sending |
+| `inboxd reply --id <id> -b <body> --confirm` | Reply to an email |
+| `inboxd reply --id <id> --body <body> --dry-run` | Preview reply without sending |
 | `inboxd restore --last N` | Restore last N deleted emails |
 | `inboxd restore --ids "id1,id2"` | Restore specific emails |
 | `inboxd mark-read --ids "id1,id2"` | Mark emails as read (remove UNREAD label) |
@@ -479,6 +500,44 @@ This will guide you through:
 | `inboxd accounts --json` | List accounts as JSON |
 | `inboxd delete --dry-run --json` | Preview deletion as structured JSON |
 | `inboxd restore --json` | Get restore results as JSON |
+
+### Preferences Management
+
+| Command | Description |
+|---------|-------------|
+| `inboxd preferences` | View preferences file content |
+| `inboxd preferences --init` | Create preferences file from template |
+| `inboxd preferences --edit` | Open in $EDITOR |
+| `inboxd preferences --validate` | Validate format and line count |
+| `inboxd preferences --json` | Output preferences and validation as JSON |
+| `inboxd preferences set --section <section> --entry "<text>"` | Add entry (idempotent) |
+| `inboxd preferences remove --section <section> --match "<pattern>"` | Remove entries by substring |
+| `inboxd preferences remove --section <section> --entry "<exact>"` | Remove exact entry |
+| `inboxd preferences list --section <section>` | List entries in section |
+| `inboxd preferences list` | List all sections with entries |
+
+**Section aliases** (use in `--section`):
+- `sender`, `senders` → Sender Behaviors
+- `important`, `vip`, `never delete` → Important People (Never Auto-Delete)
+- `category`, `categories` → Category Rules
+- `behavior`, `behaviors` → Behavioral Preferences
+- `about` → About Me
+
+**JSON output examples**:
+
+```bash
+# Set entry (idempotent)
+inboxd preferences set --section sender --entry "IBKR holidays - always delete" --json
+# Returns: {"added": true, "existed": false, "section": "Sender Behaviors", "entry": "...", "path": "..."}
+
+# List section entries
+inboxd preferences list --section sender --json
+# Returns: {"section": "Sender Behaviors", "entries": [...], "count": N, "path": "..."}
+
+# Remove by match
+inboxd preferences remove --section sender --match "ibkr" --json
+# Returns: {"removed": true, "count": 1, "entries": ["IBKR holidays - always delete"], "section": "...", "path": "..."}
+```
 
 ### Smart Filtering Options
 
@@ -540,6 +599,39 @@ You have 5 emails from LinkedIn. Delete them all?
 ---
 
 ## Workflow
+
+> [!CAUTION]
+> **MANDATORY STEP 0**: Before ANY triage, cleanup, or deletion, you MUST read user preferences first. Skipping this step leads to suggesting deletion of emails the user explicitly protected (e.g., LinkedIn job alerts for job-hunting users).
+
+### 0. Load User Preferences (REQUIRED)
+
+**Before any other step**, check for saved preferences:
+
+```bash
+cat ~/.config/inboxd/user-preferences.md 2>/dev/null || echo "NO_PREFERENCES_FILE"
+```
+
+**If preferences exist**, apply these rules to ALL subsequent decisions:
+- **Never suggest deleting** senders listed in "Important People" or marked "Never delete"
+- **Always offer cleanup** for senders marked with cleanup rules
+- **Respect category rules** (e.g., "always summarize newsletters before deleting")
+- **Check job-hunting status** before classifying LinkedIn/Indeed as noise (see Job Alerts section)
+
+**If preferences don't exist**, continue with defaults but be ready to learn user preferences.
+
+**Example**:
+```
+User: "Check my inbox"
+
+[Step 0: Load preferences]
+Checking your preferences...
+Found: "Never delete: linkedin.com (job hunting)"
+Found: "Always cleanup: promotions@*.com after 7 days"
+
+[Step 1: Summary]
+inboxd summary --json
+...
+```
 
 ### 1. Check Inbox Status
 ```bash
@@ -618,10 +710,25 @@ Categorize each email using the **Action Type Matrix**:
 - Newsletters: from contains newsletter, digest, weekly, noreply, news@
 
 #### Recurring Noise (offer cleanup)
-- Job alerts: LinkedIn, Indeed, Glassdoor job notifications
 - Promotions: % off, sale, discount, limited time, deal
 - Automated notifications: GitHub watches (not your repos), social media
 - Has CATEGORY_PROMOTIONS label
+
+#### Job Alerts (context-dependent)
+- LinkedIn, Indeed, Glassdoor job notifications
+- **Classification depends on user preferences:**
+  - If preferences say "job hunting" or "keep LinkedIn" → treat as **Important FYI**
+  - If preferences say "not job hunting" or "cleanup LinkedIn" → treat as **Recurring Noise**
+  - If no preference exists → **ASK before classifying as noise**
+
+**First encounter workflow:**
+```
+I see 8 LinkedIn job alerts. Are you currently job hunting?
+- Yes → I'll keep these visible and won't suggest cleanup
+- No → I'll classify them as cleanup candidates
+
+(I'll save your preference so you don't have to answer again)
+```
 
 #### Suspicious (warn explicitly)
 - Unexpected security alerts or access grants
@@ -786,6 +893,41 @@ When user has job-related emails (LinkedIn, Indeed, recruiters) and wants to eva
 | "Undo" / "Restore" | Recover deleted emails | `inboxd restore --last N` |
 | "What are these companies?" | Research job/opportunity emails | Fetch websites, assess legitimacy |
 | "Research these job opportunities" | Job alert evaluation | Job Research workflow (see below) |
+
+---
+
+## Sending & Replying to Emails
+
+> [!TIP]
+> Use `send` and `reply` to forward unsubscribe links, respond to emails, or share information.
+
+### Send a New Email
+```bash
+inboxd send -t recipient@example.com -s "Subject" -b "Body text" --confirm
+```
+
+### Reply to an Email
+```bash
+inboxd reply --id <email-id> -b "Reply body" --confirm
+```
+
+### Safety Features
+- **`--dry-run`**: Preview the email without sending
+- **`--confirm`**: Skip interactive confirmation (required for automation)
+- **Interactive mode**: Without flags, prompts "Send this email? (y/N)"
+- **Audit logging**: All sent emails logged to `~/.config/inboxd/sent-log.json`
+
+### Common Use Cases
+
+| Scenario | Command |
+|----------|---------|
+| Forward unsubscribe link to yourself | `inboxd send -t me@gmail.com -s "Unsubscribe link" -b "https://..." --confirm` |
+| Reply to an email | `inboxd reply --id <id> -b "Thanks, got it!" --confirm` |
+| Preview before sending | `inboxd send -t <email> -s <subj> -b <body> --dry-run` |
+
+### Account Selection
+- With one account: Uses default
+- With multiple accounts: Prompts for selection or use `--account <name>`
 
 ---
 
@@ -983,13 +1125,17 @@ Done! To undo deletions: inboxd restore --last 8
 
 **Good (plan-first approach):**
 ```
+Checking your preferences...
+Found: "Never delete: linkedin.com (job hunting)"
+Found: "Always cleanup: promotional emails after 7 days"
+
 Looking at your inbox...
 
 ## Triage Plan for work@company.com (47 unread)
 
 I'll process your inbox in these steps:
 1. **Group by sender** - Find batch cleanup opportunities
-2. **Identify cleanup candidates** - Job alerts, promotions; flag newsletters for summary
+2. **Identify cleanup candidates** - Promotions, old notifications (respecting your "keep LinkedIn" preference)
 3. **Surface action items** - Emails needing your response
 4. **Propose cleanup** - Show what I'd delete, get your OK
 
@@ -999,11 +1145,12 @@ Ready to start?
 After user says "yes":
 ```
 Step 1 complete. Found 3 high-volume senders:
-- linkedin.com (12 emails)
+- linkedin.com (12 emails) — keeping per your preferences
 - substack.com (8 emails)
 - github.com (6 notifications)
 
-Step 2: These 12 emails are cleanup candidates (job alerts + promos). I also found 8 newsletters ready for summary.
+Step 2: These 6 emails are cleanup candidates (promos). I also found 8 newsletters ready for summary.
+(LinkedIn job alerts excluded per your preferences)
 Want me to list the cleanup candidates, or proceed to Step 3 (find action items)?
 ```
 

@@ -2,7 +2,7 @@
 name: synap-assistant
 source: synap-cli
 description: Manage a personal knowledge capture system. Use when the user wants to capture ideas, track todos, organize projects, review their synap, or mentions "synap", "brain dump", "capture this", "add to my list", "what's on my plate", "what should I focus on", or "daily review".
-hash: 6a7ec55e156503d37b1c8632c43abe48
+hash: d1dfd464d2b9f0dd1b13983fbe626989
 ---
 
 # synap Assistant
@@ -39,8 +39,11 @@ When assisting users with their synap entries:
 synap stores long-term user preferences at `~/.config/synap/user-preferences.md`.
 
 - Read preferences at the start of a session when present.
-- Append stable, reusable preferences with `synap preferences --append "## Section" "..."`.
-- Avoid overwriting user-written content; prefer section-based appends.
+- Prefer idempotent updates with `synap preferences set --section "Tag Meanings" --entry "#urgent = must do today"`.
+- Remove entries with `synap preferences remove --section tags --match "urgent"`.
+- List entries with `synap preferences list --section tags --json`.
+- `synap preferences --append "## Section" "..."` is still supported for raw appends.
+- Avoid overwriting user-written content; prefer section-based updates.
 
 ## Operating Modes
 
@@ -51,7 +54,7 @@ Detect user intent and respond appropriately:
 | **Capture** | "Add this...", "Remind me...", "I had an idea..." | Fast capture, minimal questions, default to idea type |
 | **Review** | "What's on my plate?", "Daily review", "Show me..." | Stats + prioritized summary, grouped by type |
 | **Triage** | "Process my synap", "Process my brain dump", "What needs attention?" | Surface raw entries, help classify and prioritize |
-| **Focus** | "What should I work on?", "Priority items" | P1 todos + active projects, clear next actions |
+| **Focus** | "What should I work on?", "Priority items" | WIP items + P1 todos + active projects, clear next actions |
 | **Cleanup** | "Archive completed", "Clean up old stuff" | Bulk operations with preview and confirmation |
 
 ### Volume Modes (Quick vs Deep)
@@ -74,9 +77,12 @@ Detect user intent and respond appropriately:
 | Search | `synap search "keyword"` |
 | Show details | `synap show <id>` |
 | Mark done | `synap done <id>` |
+| Start working | `synap start <id>` |
+| Stop working | `synap stop <id>` |
 | Get stats | `synap stats` |
 | Setup wizard | `synap setup` |
 | Edit preferences | `synap preferences --edit` |
+| Set preference | `synap preferences set --section tags --entry "#urgent = must do today"` |
 
 ## Pre-flight Check
 
@@ -110,7 +116,7 @@ synap add --type project --title "Website Redesign" "Complete overhaul of the ma
 - `--priority <1|2|3>`: 1=high, 2=medium, 3=low
 - `--tags <tags>`: Comma-separated tags
 - `--parent <id>`: Parent entry ID
-- `--due <date>`: Due date (YYYY-MM-DD, 3d/1w, or keywords: today, tomorrow, next monday)
+- `--due <date>`: Due date (YYYY-MM-DD, 3d/1w, weekday names: monday/friday, or keywords: today, tomorrow, next monday)
 - `--json`: JSON output
 
 #### `synap todo <content>`
@@ -132,6 +138,45 @@ synap question "Should we migrate to TypeScript?"
 ```
 
 Options: `--priority`, `--tags`, `--parent`, `--due`, `--json`
+
+#### `synap log <id> <message>`
+Add a timestamped log entry under a parent entry.
+
+```bash
+synap log a1b2c3d4 "Started implementation"
+synap log a1b2c3d4 "Completed first draft" --inherit-tags
+```
+
+**Options**:
+- `--inherit-tags`: Copy tags from parent entry
+- `--json`: JSON output
+
+#### `synap batch-add`
+Add multiple entries in one operation.
+
+```bash
+# From file
+synap batch-add --file entries.json
+
+# From stdin (pipe)
+echo '[{"content":"Task 1","type":"todo"},{"content":"Task 2","type":"todo"}]' | synap batch-add
+
+# Dry run
+synap batch-add --file entries.json --dry-run
+```
+
+**Input format (JSON array):**
+```json
+[
+  {"content": "First entry", "type": "idea"},
+  {"content": "Second entry", "type": "todo", "priority": 1, "tags": ["work"]}
+]
+```
+
+**Options**:
+- `--file <path>`: Read from JSON file
+- `--dry-run`: Preview what would be added
+- `--json`: JSON output
 
 ### Query Commands
 
@@ -227,14 +272,6 @@ synap link a1b2c3d4 b2c3d4e5 --as-parent    # Set hierarchy
 synap link a1b2c3d4 b2c3d4e5 --unlink       # Remove relationship
 ```
 
-#### `synap log <id> <message>`
-Add timestamped log entry under parent. Use `--inherit-tags` to copy parent tags.
-
-```bash
-synap log a1b2c3d4 "Started work"
-synap log a1b2c3d4 "Checkpoint note" --inherit-tags
-```
-
 ### Bulk Commands
 
 #### `synap done <ids...>`
@@ -248,22 +285,34 @@ synap done --dry-run --type todo             # Preview first
 ```
 
 #### `synap start <ids...>`
-Mark entries as work-in-progress.
+Start working on entries (mark as WIP).
 
 ```bash
-synap start a1b2c3d4
-synap start --type todo --tags "sprint-1"
-synap start --dry-run --type todo
+synap start a1b2c3d4                         # Single entry
+synap start a1b2c3d4 b2c3d4e5                # Multiple
+synap start --type todo --tags urgent        # By filter
+synap start --dry-run --type todo            # Preview first
 ```
+
+**Options**:
+- `-t, --type <type>`: Filter by type
+- `--tags <tags>`: Filter by tags
+- `--dry-run`: Show what would be started
+- `--json`: JSON output
 
 #### `synap stop <ids...>`
-Remove WIP status. Use `--all` to stop all WIP entries.
+Stop working on entries (remove WIP status).
 
 ```bash
-synap stop a1b2c3d4
-synap stop --all
-synap stop --dry-run --all
+synap stop a1b2c3d4                          # Single entry
+synap stop --all                             # Stop all WIP entries
+synap stop --dry-run                         # Preview first
 ```
+
+**Options**:
+- `--all`: Stop all WIP entries
+- `--dry-run`: Show what would be stopped
+- `--json`: JSON output
 
 #### `synap archive <ids...>`
 Archive entries (hides from default view).
@@ -370,6 +419,57 @@ When user is dumping thoughts rapidly:
 2. Use default type (idea) and status (raw)
 3. After the capture session, offer to triage
 
+**Smart status defaulting**: When capturing with priority set, the CLI auto-promotes to `active` status (skipping triage). When adding entries with full metadata (priority, tags, due), there's no need to manually set status—the entry is already triaged.
+
+### Grouping Detection Pattern
+
+After capture sessions, detect opportunities to group related entries:
+
+| Signal | Action |
+|--------|--------|
+| 3+ entries with same tag in one session | Suggest parent project with that tag as context |
+| 3+ entries mentioning same keyword/topic | Suggest linking as related or creating parent |
+| User mentions "for the X project" multiple times | Proactively suggest creating/linking to X project |
+
+**Grouping workflow:**
+1. After capture, analyze recent additions: `synap list --since 1h --json`
+2. Group by common tags or detect semantic similarity
+3. If grouping detected, propose: "These 4 entries seem related to [topic]. Create a parent project?"
+4. On confirmation:
+   - `synap add "[Topic] Project" --type project --tags "topic"`
+   - For each child: `synap link <child-id> <project-id> --as-parent`
+
+### Daily Tracking Pattern
+
+For projects requiring ongoing progress logging (standups, journals, learning logs):
+
+| Signal | Action |
+|--------|--------|
+| Project mentions "daily", "track progress", "standup" | Suggest daily tracking setup |
+| User says "I need to log progress on X" | Explain `synap log` workflow |
+| Project has `--tags daily-tracking` | Ask for today's update |
+
+**Daily tracking workflow:**
+
+1. **Setup:** Create a project to track
+   ```bash
+   synap add "Learn Rust" --type project --tags "learning,daily-tracking"
+   ```
+
+2. **Daily logging:** Add timestamped progress
+   ```bash
+   synap log <project-id> "Completed chapter 3"
+   ```
+
+3. **Review progress:** View the log tree
+   ```bash
+   synap tree <project-id>
+   ```
+
+**When to suggest:** User creates learning/progress project, mentions accountability, or asks about daily tracking.
+
+**Do NOT auto-create** - always confirm with user first.
+
 ## Classification Rules
 
 ### Type Detection Heuristics
@@ -409,6 +509,7 @@ When user is dumping thoughts rapidly:
 - If P1 todos exist, suggest `synap focus`.
 - If many stale active items exist, suggest a weekly review.
 - If preferences specify cadence, follow it by default.
+- If 3+ entries added with common tags/context, suggest grouping under a parent project (see Grouping Detection Pattern).
 
 ## Batch Processing Protocols
 
@@ -479,9 +580,9 @@ Critical for preventing accidental mass changes:
   "parent": "parent-id|null",
   "related": ["id1", "id2"],
   "due": "2026-01-10T23:59:59.000Z",
+  "startedAt": "2026-01-10T08:30:00.000Z",
   "createdAt": "2026-01-05T08:30:00.000Z",
   "updatedAt": "2026-01-05T08:30:00.000Z",
-  "startedAt": "2026-01-05T08:30:00.000Z",
   "source": "cli|agent|import"
 }
 ```

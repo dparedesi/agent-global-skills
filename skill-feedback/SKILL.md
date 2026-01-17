@@ -260,7 +260,18 @@ Reports use YAML frontmatter and checkboxes to track implementation progress.
 
 - **pending** — No items implemented yet
 - **in_progress** — Some items implemented
-- **implemented** — All items done (report can be archived/deleted)
+- **completed** — All items done (will be auto-archived)
+
+### Auto-Archiving
+
+When you mark a report as `status: completed`, **immediately move it** to the `completed/` subfolder:
+
+```bash
+mv ~/.claude/skills/skill-feedback/.feedback/skill-feedback-{name}-{date}.md \
+   ~/.claude/skills/skill-feedback/.feedback/completed/
+```
+
+This keeps the main `.feedback/` folder clean with only pending items.
 
 ### Updating Status
 
