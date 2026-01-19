@@ -47,7 +47,8 @@ The script automatically determines what to update based on your current locatio
 |----------|---------------|--------------|
 | Home directory (`~/`) | ✅ Updated in `global.md` | ⏭️ Skipped (none exist) |
 | Any repo | ✅ Updated in `global.md` | ✅ Updated in `AGENTS.md` |
-| Outside a repo | ✅ Updated in `global.md` | ⏭️ Skipped (no repo found) |
+| Directory with AGENTS.md | ✅ Updated in `global.md` | ✅ Updated in `AGENTS.md` |
+| Outside a repo (no AGENTS.md) | ✅ Updated in `global.md` | ⏭️ Skipped (use --force-local to override) |
 
 ### Skill locations
 
@@ -62,6 +63,7 @@ The script automatically determines what to update based on your current locatio
 |------|-------|----------|
 | `--dry-run` | `-n` | Show changes without writing |
 | `--init` | | Create AGENTS.md if missing (auto-prompted otherwise) |
+| `--force-local` | | Force local skills update even without git repo |
 
 ---
 

@@ -359,20 +359,31 @@ def main():
         action="store_true",
         help="Create AGENTS.md if it doesn't exist"
     )
+    parser.add_argument(
+        "--force-local",
+        action="store_true",
+        help="Force local skills update even if not in a git repository"
+    )
     args = parser.parse_args()
 
     in_home = is_home_directory()
     repo_root = find_repo_root()
+    cwd = Path.cwd()
+    agents_md_exists = (cwd / "AGENTS.md").exists()
     
     # Determine what to update
     update_global = True  # Always update global skills
-    update_local = not in_home and repo_root is not None
+    # Update local if: not in home AND (in git repo OR AGENTS.md exists OR user forces it)
+    update_local = not in_home and (repo_root is not None or agents_md_exists or args.force_local)
     
     print(f"Working directory: {Path.cwd()}")
     print(f"Home directory: {HOME_DIR}")
     print(f"In home directory: {in_home}")
     if repo_root:
         print(f"Repository root: {repo_root}")
+    else:
+        print(f"Repository root: Not detected")
+    print(f"AGENTS.md exists: {agents_md_exists}")
     print()
 
     # === Update global skills in global.md ===
@@ -409,8 +420,10 @@ def main():
         print("LOCAL SKILLS")
         print("=" * 60)
         
-        local_skills_dir = repo_root / ".claude" / "skills"
-        agents_md = repo_root / "AGENTS.md"
+        # Use repo_root if available, otherwise use current directory
+        base_dir = repo_root if repo_root else cwd
+        local_skills_dir = base_dir / ".claude" / "skills"
+        agents_md = base_dir / "AGENTS.md"
         
         print(f"Scanning local skills in: {local_skills_dir}")
         local_skills = scan_skills_dir(local_skills_dir, ".claude/skills")
@@ -449,8 +462,9 @@ def main():
     else:
         if in_home:
             print("\nSkipping local skills (working from home directory - no local skills exist)")
-        elif not repo_root:
-            print("\nSkipping local skills (not in a git repository)")
+        elif not repo_root and not agents_md_exists and not args.force_local:
+            print("\nSkipping local skills (not in a git repository and no AGENTS.md found)")
+            print("  Tip: Use --force-local to update anyway, or create AGENTS.md first")
 
     # Summary
     print()
