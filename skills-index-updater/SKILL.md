@@ -6,7 +6,8 @@ description: Regenerate skill indexes for IDEs without native skill support (Kir
 # Skill index updater
 
 Automatically regenerate skill indexes by scanning skill directories and updating:
-- **Global skills** → `~/.kiro/steering/global.md` (always updated)
+- **Global skills** → `~/.kiro/steering/global.md` (if Kiro installed)
+- **Global skills** → `~/Documents/Cline/Rules/cline_overview.md` (if Cline installed)
 - **Local skills** → `AGENTS.md` in the repo (only when NOT in home directory)
 
 ---
@@ -35,7 +36,8 @@ python3 ~/.claude/skills/skills-index-updater/scripts/update_skill_index.py --dr
 
 - Python 3.8+
 - PyYAML package (`pip install pyyaml`) - optional, falls back to regex parsing
-- `~/.kiro/steering/global.md` must exist with `## Available Skills Index` section
+- For Kiro: `~/.kiro/steering/global.md` must exist with `## Available Skills Index` section
+- For Cline: `~/Documents/Cline/Rules/cline_overview.md` must exist with `## Available Skills Index` section
 
 ---
 
@@ -52,9 +54,9 @@ The script automatically determines what to update based on your current locatio
 
 ### Skill locations
 
-| Location | Scope | Output file |
+| Location | Scope | Output files |
 |----------|-------|-------------|
-| `~/.claude/skills/` | Global | `~/.kiro/steering/global.md` |
+| `~/.claude/skills/` | Global | `~/.kiro/steering/global.md` (Kiro)<br>`~/Documents/Cline/Rules/cline_overview.md` (Cline) |
 | `./.claude/skills/` | Local | `AGENTS.md` in repo root |
 
 ### Available flags
@@ -78,16 +80,20 @@ python3 ~/.claude/skills/skills-index-updater/scripts/update_skill_index.py
 The script will:
 1. Detect your working directory and whether you're in a git repo
 2. Scan global skills in `~/.claude/skills/`
-3. Update `~/.kiro/steering/global.md` with global skills index
-4. If in a repo (and not in home directory):
+3. Update `~/.kiro/steering/global.md` with global skills index (if Kiro installed)
+4. Update `~/Documents/Cline/Rules/cline_overview.md` with global skills index (if Cline installed)
+5. If in a repo (and not in home directory):
    - Scan local skills in `.claude/skills/`
    - Update `AGENTS.md` with local skills index
 
 ### 2. Verify output
 
 ```bash
-# Check global.md update
+# Check Kiro global.md update
 grep -A 20 "## Available Skills Index" ~/.kiro/steering/global.md
+
+# Check Cline overview.md update
+grep -A 20 "## Available Skills Index" ~/Documents/Cline/Rules/cline_overview.md
 
 # Check AGENTS.md update (if in a repo)
 grep -A 10 "## Available Skills Index" AGENTS.md
@@ -117,6 +123,7 @@ Scanning global skills in: /Users/you/.claude/skills
     - docx (docx)
 
 Updated: /Users/you/.kiro/steering/global.md
+Skipping Cline: /Users/you/Documents/Cline/Rules not found (Cline not installed)
 
 ============================================================
 LOCAL SKILLS
@@ -186,10 +193,12 @@ _This index is for IDEs that don't natively support skills (e.g., Gemini CLI, Ki
 | Problem | Cause | Solution |
 |---------|-------|----------|
 | "global.md not found" | Missing Kiro config | Create `~/.kiro/steering/global.md` with index section |
+| "cline_overview.md not found" | Missing Cline config | Create `~/Documents/Cline/Rules/cline_overview.md` with index section |
 | Skill not appearing | Missing frontmatter | Add `name:` and `description:` to SKILL.md |
 | YAML parse error | Invalid frontmatter syntax | Check for tabs, missing colons |
 | Index section not found | Missing marker | Add `## Available Skills Index` section |
-| Local skills skipped | Working from ~/ | This is expected - no local skills in home directory |
+| Local skills skipped | Working from ~/ | This is expected (no local skills in home directory) |
+| IDE not updated | IDE folder doesn't exist | Script validates folder existence before updating |
 
 ---
 

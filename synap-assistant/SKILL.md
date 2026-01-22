@@ -2,7 +2,7 @@
 name: synap-assistant
 source: synap-cli
 description: Manage a personal knowledge capture system. Use when the user wants to capture ideas, track todos, organize projects, review their synap, or mentions "synap", "brain dump", "capture this", "add to my list", "what's on my plate", "what should I focus on", or "daily review".
-hash: d1dfd464d2b9f0dd1b13983fbe626989
+hash: 11a120d7cb16e872b3a3a581b6489385
 ---
 
 # synap Assistant
@@ -36,7 +36,33 @@ When assisting users with their synap entries:
 
 ## User Preferences (Memory)
 
-synap stores long-term user preferences at `~/.config/synap/user-preferences.md`.
+synap stores user data in a configurable data directory (default: `~/.config/synap/`).
+
+**Data files (syncable):**
+- `entries.json` - Active entries
+- `archive.json` - Archived entries  
+- `user-preferences.md` - Agent memory / user preferences
+
+**Config files (local only):**
+- `config.json` - Settings (including `dataDir` for custom data location)
+- `deletion-log.json` - Audit trail for restore
+
+### Custom Data Directory (for sync)
+
+Users can point synap to a custom folder (e.g., a git repo for multi-device sync):
+
+```bash
+synap config dataDir ~/synap-data
+# Or during setup:
+synap setup
+```
+
+When custom `dataDir` is set:
+- Data files go to the custom location
+- Config stays in `~/.config/synap/`
+- User can sync data folder via git, Dropbox, iCloud, etc.
+
+### Preferences Operations
 
 - Read preferences at the start of a session when present.
 - Prefer idempotent updates with `synap preferences set --section "Tag Meanings" --entry "#urgent = must do today"`.
@@ -377,7 +403,46 @@ synap import backup.json --merge             # Update existing + add new
 synap import backup.json --skip-existing     # Only add new
 ```
 
+#### `synap config`
+View or update configuration.
+
+```bash
+synap config                                 # Show all settings + paths
+synap config dataDir                         # Show data directory
+synap config dataDir ~/synap-data            # Set custom data directory
+synap config --reset                         # Reset to defaults
+```
+
 ## Workflow Patterns
+
+### Multi-Device Sync Setup
+
+For users who want to sync their synap across devices:
+
+1. **Set custom data directory:**
+   ```bash
+   synap config dataDir ~/synap-data
+   ```
+
+2. **Initialize git (optional):**
+   ```bash
+   cd ~/synap-data
+   git init
+   git remote add origin git@github.com:user/synap-data.git
+   ```
+
+3. **Daily sync workflow:**
+   ```bash
+   cd ~/synap-data && git pull    # Start of day
+   # ... use synap normally ...
+   cd ~/synap-data && git add . && git commit -m "sync" && git push  # End of day
+   ```
+
+4. **On a new device:**
+   ```bash
+   git clone git@github.com:user/synap-data.git ~/synap-data
+   synap config dataDir ~/synap-data
+   ```
 
 ### Daily Review
 

@@ -2,8 +2,9 @@
 """
 Skill Index Updater - Regenerate skill indexes for IDEs without native skill support.
 
-This script scans skill directories and updates indexes in two locations:
-- Global skills: Updated in ~/.kiro/steering/global.md (always)
+This script scans skill directories and updates indexes in three locations:
+- Global skills: Updated in ~/.kiro/steering/global.md (if Kiro installed)
+- Global skills: Updated in ~/Documents/Cline/Rules/cline_overview.md (if Cline installed)
 - Local skills: Updated in AGENTS.md (only when NOT in home directory)
 
 Architecture Note:
@@ -48,10 +49,12 @@ def parse_yaml_fallback(text: str) -> Optional[Dict]:
 # Paths
 HOME_DIR = Path.home()
 GLOBAL_SKILLS_DIR = HOME_DIR / ".claude" / "skills"
-GLOBAL_MD = HOME_DIR / ".kiro" / "steering" / "global.md"
+KIRO_GLOBAL_MD = HOME_DIR / ".kiro" / "steering" / "global.md"
+CLINE_OVERVIEW_MD = HOME_DIR / "Documents" / "Cline" / "Rules" / "cline_overview.md"
 
 # Markers for the index sections
-INDEX_START = "## Available Skills Index"
+GLOBAL_INDEX_START = "## Available Global Skills Index"
+LOCAL_INDEX_START = "## Available Local Skills Index"
 INDEX_END = "---"
 
 
@@ -163,7 +166,7 @@ def generate_global_index(skills: List[Dict]) -> str:
         Formatted string matching global.md format
     """
     lines = [
-        INDEX_START,
+        GLOBAL_INDEX_START,
         "*(Auto-generated - do not edit manually)*",
         "",
     ]
@@ -188,7 +191,7 @@ def generate_local_index(skills: List[Dict]) -> str:
         Formatted markdown string
     """
     lines = [
-        INDEX_START,
+        LOCAL_INDEX_START,
         "_This index is for IDEs that don't natively support skills (e.g., Gemini CLI, Kiro). Skip if your IDE reads SKILL.md directly._",
         "",
     ]
@@ -202,13 +205,14 @@ def generate_local_index(skills: List[Dict]) -> str:
     return "\n".join(lines)
 
 
-def update_file_index(file_path: Path, new_index: str, dry_run: bool = False) -> bool:
+def update_file_index(file_path: Path, new_index: str, index_start: str, dry_run: bool = False) -> bool:
     """
     Update the index section in a file.
 
     Args:
         file_path: Path to the file to update
         new_index: New index content to insert
+        index_start: The marker string that starts the index section
         dry_run: If True, print changes without writing
 
     Returns:
@@ -221,10 +225,10 @@ def update_file_index(file_path: Path, new_index: str, dry_run: bool = False) ->
     content = file_path.read_text(encoding="utf-8")
 
     # Find the index section
-    start_match = re.search(rf"^{re.escape(INDEX_START)}.*$", content, re.MULTILINE)
+    start_match = re.search(rf"^{re.escape(index_start)}.*$", content, re.MULTILINE)
     if not start_match:
-        print(f"Error: '{INDEX_START}' header not found in {file_path}", file=sys.stderr)
-        print(f"  Tip: Add this line to your file: {INDEX_START}", file=sys.stderr)
+        print(f"Error: '{index_start}' header not found in {file_path}", file=sys.stderr)
+        print(f"  Tip: Add this line to your file: {index_start}", file=sys.stderr)
         return False
 
     # Find where the index section ends
@@ -326,7 +330,7 @@ AGENTS_MD_TEMPLATE = """# Agents and Skills
 
 This file documents the agents and skills available in this repository.
 
-## Available Skills Index
+## Available Local Skills Index
 
 ---
 """
@@ -402,14 +406,25 @@ def main():
         
         global_index = generate_global_index(global_skills)
         
-        if GLOBAL_MD.exists():
-            if update_file_index(GLOBAL_MD, global_index, dry_run=args.dry_run):
+        # Update Kiro global.md if it exists
+        if KIRO_GLOBAL_MD.exists():
+            if update_file_index(KIRO_GLOBAL_MD, global_index, GLOBAL_INDEX_START, dry_run=args.dry_run):
                 if not args.dry_run:
-                    print(f"\nUpdated: {GLOBAL_MD}")
+                    print(f"\nUpdated: {KIRO_GLOBAL_MD}")
             else:
-                print(f"\nFailed to update: {GLOBAL_MD}", file=sys.stderr)
+                print(f"\nFailed to update: {KIRO_GLOBAL_MD}", file=sys.stderr)
         else:
-            print(f"\nWarning: {GLOBAL_MD} not found. Skipping global index update.", file=sys.stderr)
+            print(f"\nSkipping Kiro: {KIRO_GLOBAL_MD.parent} not found (Kiro not installed)")
+        
+        # Update Cline overview.md if it exists
+        if CLINE_OVERVIEW_MD.exists():
+            if update_file_index(CLINE_OVERVIEW_MD, global_index, GLOBAL_INDEX_START, dry_run=args.dry_run):
+                if not args.dry_run:
+                    print(f"Updated: {CLINE_OVERVIEW_MD}")
+            else:
+                print(f"\nFailed to update: {CLINE_OVERVIEW_MD}", file=sys.stderr)
+        else:
+            print(f"Skipping Cline: {CLINE_OVERVIEW_MD.parent} not found (Cline not installed)")
     else:
         print("\nNo global skills found.")
 
@@ -452,7 +467,7 @@ def main():
                         return
             
             if agents_md.exists():
-                if update_file_index(agents_md, local_index, dry_run=args.dry_run):
+                if update_file_index(agents_md, local_index, LOCAL_INDEX_START, dry_run=args.dry_run):
                     if not args.dry_run:
                         print(f"\nUpdated: {agents_md}")
                 else:
