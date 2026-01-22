@@ -68,6 +68,92 @@ Use when: Heavy inbox (>30 unread), user wants thoroughness, language like "what
 | "What's important?" | Deep | Action items only |
 | "Help me with [account]" | Quick | Single account |
 
+### Proactive Triage Mode
+
+Use when: User says "proactive triage", "auto cleanup", or invokes `/inbox-triage`
+
+This mode uses saved rules to **automatically execute safe actions** while queuing destructive actions for confirmation.
+
+#### How It Works
+
+1. **Invoke triage with auto-execute:**
+   ```bash
+   inboxd triage --auto --json
+   ```
+
+2. **Process the JSON response:**
+   ```json
+   {
+     "executed": {
+       "markRead": { "count": 5, "ids": [...] },
+       "archived": { "count": 3, "ids": [...] }
+     },
+     "pending": {
+       "delete": { "count": 2, "emails": [...], "requiresConfirmation": true }
+     },
+     "remaining": { "count": 12, "emails": [...] },
+     "undoInfo": {
+       "markReadUndo": "inboxd mark-unread --ids 'id1,id2'",
+       "archiveUndo": "inboxd unarchive --last 3"
+     }
+   }
+   ```
+
+3. **Report to user what was done automatically**
+4. **Confirm pending deletions** (single confirmation for batch)
+5. **Classify remaining emails** using preference interpretation
+
+#### Automation Boundaries
+
+| Action | Proactive Mode Behavior |
+|--------|-------------------------|
+| mark-read | Auto-execute if rule exists |
+| archive | Auto-execute if rule exists |
+| delete | Queue and report; require one confirmation |
+| summarize | Execute (AI task, non-destructive) |
+| send/reply | Never auto-execute |
+
+#### Example Workflow
+
+**User:** `/inbox-triage`
+
+**Agent:**
+```
+## Proactive Triage: personal@gmail.com
+
+### Automatic Actions Completed
+- Marked 8 emails as read (GitHub notifications per rule)
+- Archived 4 emails (promotional, older than 14d per rule)
+
+### Pending Confirmation
+2 emails queued for deletion (linkedin.com per your rule):
+| Subject | Age |
+|---------|-----|
+| 15 new jobs for you | 2d |
+| Weekly job digest | 7d |
+
+**Delete these 2?** (y/n)
+
+### Remaining (12 emails)
+- 3 newsletters (ready for summary)
+- 2 action items (PR reviews)
+
+Want me to summarize newsletters and highlight action items?
+```
+
+#### Rule Promotion
+
+When processing remaining emails, if you notice repeated patterns:
+1. Suggest converting preferences into rules
+2. Example: "You've deleted 5 LinkedIn job alerts. Want me to create an auto-delete rule for linkedin.com?"
+
+Use `inboxd rules add` to create rules:
+```bash
+inboxd rules add --always-delete --sender "linkedin.com"
+inboxd rules add --auto-mark-read --sender "github.com"
+inboxd rules add --auto-archive --sender "newsletter.com" --older-than 7
+```
+
 ---
 
 ## Inbox Zero Philosophy
@@ -365,6 +451,7 @@ Delete this batch? (yes / no / yes to all)
 |------|---------|
 | Check status | `inboxd summary --json` |
 | Full triage | `inboxd analyze --count 50` → classify → present |
+| Proactive triage | `inboxd triage --auto --json` |
 | Analyze by sender | `inboxd analyze --count 50 --group-by sender` |
 | Find old emails | `inboxd analyze --older-than 30d` |
 | Quick count | `inboxd search -q "from:linkedin.com" --count` |
@@ -475,6 +562,8 @@ This will guide you through:
 
 | Command | Description |
 |---------|-------------|
+| `inboxd triage --auto --json` | Proactive triage: auto-execute safe actions, queue deletes |
+| `inboxd triage --dry-run` | Preview triage actions without executing |
 | `inboxd delete --ids "id1,id2,id3" --confirm` | Move emails to trash by ID |
 | `inboxd delete --sender "pattern" --dry-run` | Preview deletion by sender filter |
 | `inboxd delete --match "pattern" --dry-run` | Preview deletion by subject filter |
@@ -500,6 +589,21 @@ This will guide you through:
 | `inboxd accounts --json` | List accounts as JSON |
 | `inboxd delete --dry-run --json` | Preview deletion as structured JSON |
 | `inboxd restore --json` | Get restore results as JSON |
+
+### Rules Management
+
+| Command | Description |
+|---------|-------------|
+| `inboxd rules list` | List all saved rules |
+| `inboxd rules add --always-delete --sender "spam.com"` | Auto-delete emails from sender |
+| `inboxd rules add --never-delete --sender "boss@work.com"` | Protect emails from sender |
+| `inboxd rules add --auto-archive --sender "newsletter.com"` | Auto-archive emails from sender |
+| `inboxd rules add --auto-mark-read --sender "github.com"` | Auto-mark emails as read |
+| `inboxd rules add --auto-archive --sender "promo.com" --older-than 7` | Archive promos older than 7 days |
+| `inboxd rules remove --id <rule-id>` | Remove a rule by ID |
+| `inboxd rules apply --dry-run` | Preview rule application |
+| `inboxd rules apply --confirm` | Apply all rules |
+| `inboxd rules suggest` | Suggest rules based on deletion patterns |
 
 ### Preferences Management
 
@@ -879,6 +983,7 @@ When user has job-related emails (LinkedIn, Indeed, recruiters) and wants to eva
 |-----------|----------------|-------------|
 | "Check my emails" | Quick status + recommendations | Summary → recommend next step |
 | "Clean up my inbox" | Delete junk, keep important | Focus on Newsletters (summarize), Promos/Notifications |
+| "Proactive triage" / "Auto cleanup" | Rule-based automatic actions | `inboxd triage --auto --json` → Proactive Triage Mode |
 | "What's important?" | Surface action items | Classify, highlight Action Required only |
 | "Delete all from [sender]" | Bulk sender cleanup | `--sender "X" --dry-run` → confirm → `--ids` |
 | "Delete [sender]'s emails" | Bulk sender cleanup | Two-step pattern with `--sender` filter |
