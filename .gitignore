@@ -20,3 +20,11 @@ oa/
 
 # Codex's system skills
 .system/
+
+# Node.js projects
+node_modules/
+tmp/
+*.log
+
+# Browser profiles (chrome data, cache, etc.)
+dev-browser/profiles/

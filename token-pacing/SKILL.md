@@ -11,11 +11,40 @@ Analyzes current token usage against the reset deadline to provide a specific da
 
 ## Quick Start
 
-1. Identify **provider** from user's message (or ask)
-2. Get **current metric** (usage % or % remaining)
-3. Apply provider profile to get reset period and normalize metric
-4. Run calculations (Steps 1-4 below)
-5. Output the Token Pacing Report
+This skill calculates optimal token burn rate from current usage data.
+
+**To use this skill, provide:**
+1. **Provider name** (Claude, Gemini, Codex, VS Code, Cursor, Windsurf, etc.)
+2. **Current usage %** (or % remaining)
+3. **Time until reset** (for weekly providers)
+
+**Example:** "I'm at 31% in Claude, resets in 4 days"
+
+**Then the skill will:**
+1. Apply provider profile to normalize metric
+2. Calculate pacing (Steps 1-4 below)
+3. Output the Token Pacing Report
+
+---
+
+## How to Get Usage Data (Optional)
+
+If you have `ai-usage` installed, run it for a quick overview of all services.
+Otherwise, check your provider directly:
+
+| Provider | How to Check |
+|----------|--------------|
+| **Claude Code** | IDE status bar, or `/usage` command |
+| **OpenAI Codex** | ChatGPT settings, or IDE status bar |
+| **Gemini CLI** | `gcli quota` or Google Cloud dashboard |
+| **VS Code Copilot** | Copilot icon in status bar → "View quota usage" |
+| **Cursor** | Settings → Copilot → Usage |
+| **Windsurf** | Codeium status panel |
+
+**Web dashboards:**
+- Claude/Codex: Provider settings pages
+- Gemini: https://console.cloud.google.com/
+- Copilot: https://github.com/settings/copilot
 
 ---
 
@@ -374,9 +403,59 @@ You're pacing well. Maintain ~14.3%/day.
 
 ---
 
+## The 5pm Rule (Advanced Pacing)
+
+**Problem:** Standard pacing aims for 100% at the exact reset time. But if your reset is at 11:59 AM and you hit 100% at 11:58 AM, you've perfectly paced... but also can't use tokens all morning. Similarly, evening resets (10 PM) mean you can't use tokens during dinner/evening work.
+
+**Solution:** Aim to hit 100% by **5:00 PM** on the "effective reset day" — this eliminates "dead time" when you'd otherwise be token-limited during productive hours.
+
+### Effective Reset Day
+
+| Reset Time | Effective Target |
+|------------|------------------|
+| **Morning reset** (before 5 PM) | 5:00 PM the day **before** |
+| **Evening reset** (5 PM or later) | 5:00 PM the **same day** |
+
+**Examples:**
+- Reset at 11:59 AM Wednesday → Target: 5:00 PM Tuesday
+- Reset at 10:56 PM Thursday → Target: 5:00 PM Thursday
+- Reset at 12:00 AM (midnight) Monday → Target: 5:00 PM Sunday
+
+### Adjusted Calculation
+
+When using the 5pm Rule, replace the `reset` datetime in Step 1:
+
+```
+# Standard calculation
+reset = actual_reset_datetime
+
+# 5pm Rule calculation
+if reset.time < 17:00:
+    effective_reset = (reset.date - 1 day) at 17:00
+else:
+    effective_reset = reset.date at 17:00
+
+# Then use effective_reset for all calculations
+days_remaining = (effective_reset - now) in days
+```
+
+> [!TIP]
+> The 5pm Rule is optional but recommended for users who want to maximize productive usage hours. Always mention when using it in the report.
+
+### Report Addition for 5pm Rule
+
+When using the 5pm Rule, add to the report:
+
+```
+**Target:** 5:00 PM [Day] (5pm Rule applied)
+```
+
+---
+
 ## Quality Guidelines
 
 - Round percentages to 1 decimal place
+- **Always show both metrics:** Time passed % vs % used — this makes pacing intuitive at a glance
 - If `daily_target > 50%`, warn that this is an extremely heavy workload
 - If `days_remaining < 1`, switch to hourly targets:
   ```
