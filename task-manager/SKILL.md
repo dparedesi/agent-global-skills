@@ -1,6 +1,6 @@
 ---
 name: task-manager
-description: CLI tool for managing team tasks outside of Claude Code's built-in tools. Use this skill when tasks need to be archived, bulk cleaned up, or when you need a high-level view of task dependencies. Triggers: (1) User asks to clean up or archive completed tasks, (2) Too many resolved tasks cluttering the list, (3) Need to visualize task dependencies, (4) Want to manage tasks via command line.
+description: CLI tool for managing team tasks outside of Claude Code's built-in tools. Use this skill when tasks need to be archived, bulk cleaned up, or when you need a high-level view of task dependencies. Triggers such as (1) User asks to clean up or archive completed tasks, (2) Too many resolved tasks cluttering the list, (3) Need to visualize task dependencies, (4) Want to manage tasks via command line.
 ---
 
 # Task Manager CLI
