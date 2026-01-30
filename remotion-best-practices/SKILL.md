@@ -43,3 +43,4 @@ Read individual rule files for detailed explanations and code examples:
 - [rules/videos.md](rules/videos.md) - Embedding videos in Remotion - trimming, volume, speed, looping, pitch
 - [rules/parameters.md](rules/parameters.md) - Make a video parametrizable by adding a Zod schema
 - [rules/maps.md](rules/maps.md) - Add a map using Mapbox and animate it
+- [rules/troubleshooting.md](rules/troubleshooting.md) - Common issues and solutions: Video component differences, audio/video sync, timestamp conversion, rendering tips
