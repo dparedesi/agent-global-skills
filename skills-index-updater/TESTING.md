@@ -1,6 +1,6 @@
 # Testing & evaluation
 
-Testing documentation for the skill index updater.
+Testing documentation for the skill index updater (Cline only).
 
 ## Testing summary
 
@@ -18,7 +18,7 @@ Testing documentation for the skill index updater.
 
 **Expected behaviors:**
 - [ ] Runs `python3 ~/.claude/skills/skills-index-updater/scripts/update_skill_index.py`
-- [ ] Updates `~/.kiro/steering/global.md` with global skills
+- [ ] Updates `~/Documents/Cline/Rules/cline_overview.md` with global skills
 - [ ] Skips local skills (displays message: "working from home directory")
 - [ ] Does NOT prompt for any user input
 
@@ -31,10 +31,10 @@ Testing documentation for the skill index updater.
 
 ### Scenario 2: Update from a repository
 
-**Query:** "Update skill index" (while in a git repo that's not ~/`)
+**Query:** "Update skill index" (while in a git repo that's not `~/`)
 
 **Expected behaviors:**
-- [ ] Updates `~/.kiro/steering/global.md` with global skills
+- [ ] Updates `~/Documents/Cline/Rules/cline_overview.md` with global skills
 - [ ] Updates `AGENTS.md` in the repo with local skills
 - [ ] If AGENTS.md doesn't exist, prompts to create it
 - [ ] Reports skill counts for both global and local
@@ -51,7 +51,7 @@ Testing documentation for the skill index updater.
 
 **Expected behaviors:**
 - [ ] Uses `--dry-run` flag
-- [ ] Shows what would be written to both global.md and AGENTS.md
+- [ ] Shows what would be written to both cline_overview.md and AGENTS.md
 - [ ] Does NOT modify any files
 - [ ] Clearly labels output as "DRY RUN"
 
@@ -66,7 +66,7 @@ Testing documentation for the skill index updater.
 **Query:** "Update skill index" (but target file lacks the index section)
 
 **Expected behaviors:**
-- [ ] Script reports error: "## Available Skills Index header not found"
+- [ ] Script reports error: "## Available Global Skills Index header not found"
 - [ ] Suggests adding the section marker
 - [ ] Does NOT crash or corrupt file
 - [ ] Continues processing other files if one fails
@@ -80,10 +80,10 @@ Testing documentation for the skill index updater.
 
 ### Scenario 5: Outside a repository
 
-**Query:** "Update skill index" (from a directory that's not a git repo and not ~/)
+**Query:** "Update skill index" (from a directory that's not a git repo and not `~/`)
 
 **Expected behaviors:**
-- [ ] Updates global skills in `~/.kiro/steering/global.md`
+- [ ] Updates global skills in `~/Documents/Cline/Rules/cline_overview.md`
 - [ ] Skips local skills (displays message: "not in a git repository")
 - [ ] Completes successfully
 
@@ -99,11 +99,11 @@ Testing documentation for the skill index updater.
 # Dry run to preview all changes
 python3 ~/.claude/skills/skills-index-updater/scripts/update_skill_index.py --dry-run
 
-# Check global.md was updated
-grep -A 5 "## Available Skills Index" ~/.kiro/steering/global.md
+# Check cline_overview.md was updated
+grep -A 5 "## Available Global Skills Index" ~/Documents/Cline/Rules/cline_overview.md
 
 # Check AGENTS.md was updated (when in a repo)
-grep -A 5 "## Available Skills Index" AGENTS.md
+grep -A 5 "## Available Local Skills Index" AGENTS.md
 
 # Count skills found during run
 python3 ~/.claude/skills/skills-index-updater/scripts/update_skill_index.py 2>&1 | grep "Found"
@@ -120,7 +120,7 @@ echo "" | python3 ~/.claude/skills/skills-index-updater/scripts/update_skill_ind
 | Invalid YAML in frontmatter | Warning printed, skill skipped |
 | Missing name or description | Warning printed, skill skipped |
 | Hidden folders (starting with .) | Automatically excluded |
-| global.md doesn't exist | Warning printed, global update skipped |
+| cline_overview.md doesn't exist | Error printed, global update skipped |
 | AGENTS.md doesn't exist | Prompt to create (or use --init) |
 | Running from ~/ | Only updates global skills |
 | No local skills in repo | Reports 0 local skills, still updates AGENTS.md |

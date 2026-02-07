@@ -9,6 +9,16 @@ metadata:
 
 Use this skills whenever you are dealing with Remotion code to obtain the domain-specific knowledge.
 
+## Critical: Trimming Videos
+
+**NEVER trim videos with one-off ffmpeg commands.** Always use a script approach:
+1. Create `scripts/trim-videos.sh` that trims ALL source files
+2. Output to `public/trimmed/` subfolder (keep originals untouched)
+3. Reference trimmed files in your composition
+4. Re-run script when timestamps change
+
+See [rules/troubleshooting.md](rules/troubleshooting.md#trimming-videos---the-script-approach) for the full script template.
+
 ## How to use
 
 Read individual rule files for detailed explanations and code examples:

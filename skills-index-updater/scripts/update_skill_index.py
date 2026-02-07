@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 """
-Skill Index Updater - Regenerate skill indexes for IDEs without native skill support.
+Skill Index Updater - Regenerate skill indexes for Cline.
 
-This script scans skill directories and updates indexes in three locations:
-- Global skills: Updated in ~/.kiro/steering/global.md (if Kiro installed)
-- Global skills: Updated in ~/Documents/Cline/Rules/cline_overview.md (if Cline installed)
+This script scans skill directories and updates indexes:
+- Global skills: Updated in ~/Documents/Cline/Rules/cline_overview.md
 - Local skills: Updated in AGENTS.md (only when NOT in home directory)
 
 Architecture Note:
-    - Global skills: ~/.claude/skills/ (available across all repos)
+    - Global skills: ~/Documents/Cline/skills/ (available across all repos)
     - Local skills: .claude/skills/ in the current repo (project-specific)
     - When working from ~/, only global skills exist (no local skills)
 
@@ -48,8 +47,11 @@ def parse_yaml_fallback(text: str) -> Optional[Dict]:
 
 # Paths
 HOME_DIR = Path.home()
-GLOBAL_SKILLS_DIR = HOME_DIR / ".claude" / "skills"
-KIRO_GLOBAL_MD = HOME_DIR / ".kiro" / "steering" / "global.md"
+# Global skills locations (in order of preference)
+GLOBAL_SKILLS_LOCATIONS = [
+    (HOME_DIR / "Documents" / "Cline" / "skills", "Documents/Cline/skills"),
+    (HOME_DIR / ".kiro" / "skills", ".kiro/skills"),
+]
 CLINE_OVERVIEW_MD = HOME_DIR / "Documents" / "Cline" / "Rules" / "cline_overview.md"
 
 # Markers for the index sections
@@ -126,7 +128,7 @@ def scan_skills_dir(skills_dir: Path, path_prefix: str) -> List[Dict]:
 
     Args:
         skills_dir: Path to the skills directory to scan
-        path_prefix: Path prefix for display (e.g., ".claude/skills")
+        path_prefix: Path prefix for display (e.g., "~/Documents/Cline/skills")
 
     Returns:
         List of skill dicts sorted by name
@@ -157,13 +159,13 @@ def scan_skills_dir(skills_dir: Path, path_prefix: str) -> List[Dict]:
 
 def generate_global_index(skills: List[Dict]) -> str:
     """
-    Generate the index section for global.md (Kiro format).
+    Generate the index section for cline_overview.md.
 
     Args:
         skills: List of skill dicts
 
     Returns:
-        Formatted string matching global.md format
+        Formatted string matching cline_overview.md format
     """
     lines = [
         GLOBAL_INDEX_START,
@@ -192,7 +194,7 @@ def generate_local_index(skills: List[Dict]) -> str:
     """
     lines = [
         LOCAL_INDEX_START,
-        "_This index is for IDEs that don't natively support skills (e.g., Gemini CLI, Kiro). Skip if your IDE reads SKILL.md directly._",
+        "_This index is for IDEs that don't natively support skills. Skip if your IDE reads SKILL.md directly._",
         "",
     ]
 
@@ -232,7 +234,7 @@ def update_file_index(file_path: Path, new_index: str, index_start: str, dry_run
         return False
 
     # Find where the index section ends
-    # The index contains skill entries. For global.md each ends with ---.
+    # The index contains skill entries. Each ends with ---.
     # The section ends when we hit content that's not part of a skill entry.
     
     remaining_content = content[start_match.start():]
@@ -326,9 +328,9 @@ def update_file_index(file_path: Path, new_index: str, index_start: str, dry_run
     return True
 
 
-AGENTS_MD_TEMPLATE = """# Agents and Skills
+LOCAL_SKILLS_TEMPLATE = """# Local Skills
 
-This file documents the agents and skills available in this repository.
+This file documents the local skills available in this repository.
 
 ## Available Local Skills Index
 
@@ -336,22 +338,24 @@ This file documents the agents and skills available in this repository.
 """
 
 
-def init_agents_md(file_path: Path, dry_run: bool = False) -> bool:
-    """Create AGENTS.md with default template."""
+def init_local_skills_file(file_path: Path, dry_run: bool = False) -> bool:
+    """Create .clinerules/agents_skills.md with default template."""
     if dry_run:
         print(f"\n=== DRY RUN: Would create {file_path} ===")
-        print(AGENTS_MD_TEMPLATE)
+        print(LOCAL_SKILLS_TEMPLATE)
         print("=== END ===\n")
         return True
     
-    file_path.write_text(AGENTS_MD_TEMPLATE, encoding="utf-8")
+    # Create parent directory if needed
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+    file_path.write_text(LOCAL_SKILLS_TEMPLATE, encoding="utf-8")
     print(f"Created: {file_path}")
     return True
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Update skill indexes (global.md and AGENTS.md)"
+        description="Update skill indexes for Cline (cline_overview.md and AGENTS.md)"
     )
     parser.add_argument(
         "--dry-run", "-n",
@@ -373,12 +377,12 @@ def main():
     in_home = is_home_directory()
     repo_root = find_repo_root()
     cwd = Path.cwd()
-    agents_md_exists = (cwd / "AGENTS.md").exists()
+    local_skills_file_exists = (cwd / ".clinerules" / "agents_skills.md").exists()
     
     # Determine what to update
     update_global = True  # Always update global skills
-    # Update local if: not in home AND (in git repo OR AGENTS.md exists OR user forces it)
-    update_local = not in_home and (repo_root is not None or agents_md_exists or args.force_local)
+    # Update local if: not in home AND (in git repo OR local skills file exists OR user forces it)
+    update_local = not in_home and (repo_root is not None or local_skills_file_exists or args.force_local)
     
     print(f"Working directory: {Path.cwd()}")
     print(f"Home directory: {HOME_DIR}")
@@ -387,17 +391,33 @@ def main():
         print(f"Repository root: {repo_root}")
     else:
         print(f"Repository root: Not detected")
-    print(f"AGENTS.md exists: {agents_md_exists}")
+    print(f"Local skills file exists: {local_skills_file_exists}")
     print()
 
-    # === Update global skills in global.md ===
+    # === Update global skills in cline_overview.md ===
     print("=" * 60)
     print("GLOBAL SKILLS")
     print("=" * 60)
     
-    print(f"Scanning global skills in: {GLOBAL_SKILLS_DIR}")
-    global_skills = scan_skills_dir(GLOBAL_SKILLS_DIR, "~/.claude/skills")
-    print(f"  Found {len(global_skills)} global skills")
+    # Try each global skills location in order, use first non-empty one
+    global_skills = []
+    global_skills_dir = None
+    global_skills_prefix = None
+    
+    for skills_dir, path_prefix in GLOBAL_SKILLS_LOCATIONS:
+        print(f"Checking: {skills_dir}")
+        skills = scan_skills_dir(skills_dir, path_prefix)
+        if skills:
+            global_skills = skills
+            global_skills_dir = skills_dir
+            global_skills_prefix = path_prefix
+            print(f"  Found {len(global_skills)} global skills")
+            break
+        else:
+            print(f"  No skills found, trying next location...")
+    
+    if not global_skills:
+        print("  No global skills found in any location.")
     
     if global_skills:
         print("\n  Skills found:")
@@ -406,25 +426,16 @@ def main():
         
         global_index = generate_global_index(global_skills)
         
-        # Update Kiro global.md if it exists
-        if KIRO_GLOBAL_MD.exists():
-            if update_file_index(KIRO_GLOBAL_MD, global_index, GLOBAL_INDEX_START, dry_run=args.dry_run):
-                if not args.dry_run:
-                    print(f"\nUpdated: {KIRO_GLOBAL_MD}")
-            else:
-                print(f"\nFailed to update: {KIRO_GLOBAL_MD}", file=sys.stderr)
-        else:
-            print(f"\nSkipping Kiro: {KIRO_GLOBAL_MD.parent} not found (Kiro not installed)")
-        
-        # Update Cline overview.md if it exists
+        # Update Cline cline_overview.md if it exists
         if CLINE_OVERVIEW_MD.exists():
             if update_file_index(CLINE_OVERVIEW_MD, global_index, GLOBAL_INDEX_START, dry_run=args.dry_run):
                 if not args.dry_run:
-                    print(f"Updated: {CLINE_OVERVIEW_MD}")
+                    print(f"\nUpdated: {CLINE_OVERVIEW_MD}")
             else:
                 print(f"\nFailed to update: {CLINE_OVERVIEW_MD}", file=sys.stderr)
         else:
-            print(f"Skipping Cline: {CLINE_OVERVIEW_MD.parent} not found (Cline not installed)")
+            print(f"\nError: {CLINE_OVERVIEW_MD} not found")
+            print(f"  Create it with a '{GLOBAL_INDEX_START}' section")
     else:
         print("\nNo global skills found.")
 
@@ -437,12 +448,33 @@ def main():
         
         # Use repo_root if available, otherwise use current directory
         base_dir = repo_root if repo_root else cwd
-        local_skills_dir = base_dir / ".claude" / "skills"
-        agents_md = base_dir / "AGENTS.md"
+        local_skills_file = base_dir / ".clinerules" / "agents_skills.md"
         
-        print(f"Scanning local skills in: {local_skills_dir}")
-        local_skills = scan_skills_dir(local_skills_dir, ".claude/skills")
-        print(f"  Found {len(local_skills)} local skills")
+        # Local skills locations (in order of preference)
+        local_skills_locations = [
+            (base_dir / ".claude" / "skills", ".claude/skills"),
+            (base_dir / ".kiro" / "skills", ".kiro/skills"),
+        ]
+        
+        # Try each local skills location in order, use first non-empty one
+        local_skills = []
+        local_skills_dir = None
+        local_skills_prefix = None
+        
+        for skills_dir, path_prefix in local_skills_locations:
+            print(f"Checking: {skills_dir}")
+            skills = scan_skills_dir(skills_dir, path_prefix)
+            if skills:
+                local_skills = skills
+                local_skills_dir = skills_dir
+                local_skills_prefix = path_prefix
+                print(f"  Found {len(local_skills)} local skills")
+                break
+            else:
+                print(f"  No skills found, trying next location...")
+        
+        if not local_skills:
+            print("  No local skills found in any location.")
         
         if local_skills:
             print("\n  Skills found:")
@@ -451,33 +483,33 @@ def main():
             
             local_index = generate_local_index(local_skills)
             
-            # Check if AGENTS.md exists, offer to create if not
-            if not agents_md.exists():
+            # Check if local skills file exists, offer to create if not
+            if not local_skills_file.exists():
                 if args.init:
-                    if not init_agents_md(agents_md, args.dry_run):
+                    if not init_local_skills_file(local_skills_file, args.dry_run):
                         sys.exit(1)
                 else:
-                    print(f"\nAGENTS.md not found at: {agents_md}")
+                    print(f"\nLocal skills file not found at: {local_skills_file}")
                     response = input("Create it now? [Y/n]: ").strip().lower()
                     if response in ("", "y", "yes"):
-                        if not init_agents_md(agents_md, args.dry_run):
+                        if not init_local_skills_file(local_skills_file, args.dry_run):
                             sys.exit(1)
                     else:
                         print("Skipping local skills index update.")
                         return
             
-            if agents_md.exists():
-                if update_file_index(agents_md, local_index, LOCAL_INDEX_START, dry_run=args.dry_run):
+            if local_skills_file.exists():
+                if update_file_index(local_skills_file, local_index, LOCAL_INDEX_START, dry_run=args.dry_run):
                     if not args.dry_run:
-                        print(f"\nUpdated: {agents_md}")
+                        print(f"\nUpdated: {local_skills_file}")
                 else:
-                    print(f"\nFailed to update: {agents_md}", file=sys.stderr)
+                    print(f"\nFailed to update: {local_skills_file}", file=sys.stderr)
         else:
             print("\nNo local skills found.")
     else:
         if in_home:
             print("\nSkipping local skills (working from home directory - no local skills exist)")
-        elif not repo_root and not agents_md_exists and not args.force_local:
+        elif not repo_root and not local_skills_file_exists and not args.force_local:
             print("\nSkipping local skills (not in a git repository and no AGENTS.md found)")
             print("  Tip: Use --force-local to update anyway, or create AGENTS.md first")
 

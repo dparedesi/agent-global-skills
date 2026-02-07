@@ -1,8 +1,6 @@
 ---
 name: synap-assistant
-source: synap-cli
 description: Manage a personal knowledge capture system. Use when the user wants to capture ideas, track todos, organize projects, review their synap, or mentions "synap", "brain dump", "capture this", "add to my list", "what's on my plate", "what should I focus on", or "daily review".
-hash: 4977f0a2c6dec36b5a8601ddbf2916c8
 ---
 
 # synap Assistant
